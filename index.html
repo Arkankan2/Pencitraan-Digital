@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pengolahan Citra Digital — Naufal Madani (241011128)</title>
+  <meta name="description"
+    content="Tugas Praktikum Pengolahan Citra Digital oleh Naufal Madani, NIM 241011128, Rekayasa Perangkat Lunak Semester 4, ITH." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+
+  <!-- Chart.js CDN (untuk histogram) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Stylesheet utama -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- ============================================================
+     HEADER — Identitas Kelompok
+============================================================ -->
+  <header>
+    <div class="container">
+      <div class="header-badge">Tugas Praktikum Pengolahan Citra Digital</div>
+      <h1>Digital Image Processing<br>Interactive Laboratory</h1>
+      <p class="header-subtitle">Implementasi Pengolahan Citra Berbasis Web menggunakan JavaScript</p>
+
+      <!-- Info kelompok & kampus -->
+      <div class="group-info">
+        <div class="group-info-item">
+          <span class="group-info-label">Program Studi</span>
+          <span class="group-info-value">Rekayasa Perangkat Lunak — Semester 4</span>
+        </div>
+        <div class="group-info-divider"></div>
+        <div class="group-info-item">
+          <span class="group-info-label">Kampus</span>
+          <span class="group-info-value">Institut Teknologi Bacharuddin Jusuf Habibie (ITH)</span>
+        </div>
+        <div class="group-info-divider"></div>
+        <div class="group-info-item">
+          <span class="group-info-label">Mata Kuliah</span>
+          <span class="group-info-value">Pencitraan Digital</span>
+        </div>
+      </div>
+
+      <!-- Kartu anggota kelompok -->
+      <div class="member-grid">
+
+        <!-- Anggota 1 -->
+        <div class="member-card">
+          <div class="member-avatar-wrap">
+            <img src="img/arkan.png" alt="Foto Muhammad Arkan Naim" class="member-avatar" />
+            <div class="member-avatar-ring"></div>
+          </div>
+          <div class="member-info">
+            <span class="member-name">Muhammad Arkan Naim</span>
+            <span class="member-nim">NIM 241011123</span>
+          </div>
+        </div>
+
+        <!-- Anggota 2 -->
+        <div class="member-card">
+          <div class="member-avatar-wrap">
+            <img src="img/akmal.png" alt="Foto Muhammad Akmal Ahsan" class="member-avatar" />
+            <div class="member-avatar-ring"></div>
+          </div>
+          <div class="member-info">
+            <span class="member-name">Muhammad Akmal Ahsan</span>
+            <span class="member-nim">NIM 241011124</span>
+          </div>
+        </div>
+
+        <!-- Anggota 3 -->
+        <div class="member-card">
+          <div class="member-avatar-wrap">
+            <img src="img/syahrul.png" alt="Foto Syahrul Ramadhan" class="member-avatar" />
+            <div class="member-avatar-ring"></div>
+          </div>
+          <div class="member-info">
+            <span class="member-name">Syahrul Ramadhan</span>
+            <span class="member-nim">NIM 241011125</span>
+          </div>
+        </div>
+
+        <!-- Anggota 4 -->
+        <div class="member-card">
+          <div class="member-avatar-wrap">
+            <img src="img/alfatih.png" alt="Foto Muhammad Alfatih Syaefuddin" class="member-avatar" />
+            <div class="member-avatar-ring"></div>
+          </div>
+          <div class="member-info">
+            <span class="member-name">Muhammad Alfatih Syaefuddin</span>
+            <span class="member-nim">NIM 241011126</span>
+          </div>
+        </div>
+
+        <!-- Anggota 5 -->
+        <div class="member-card">
+          <div class="member-avatar-wrap">
+            <img src="img/naufal.png" alt="Foto Andi Ahmad Naufal Madani" class="member-avatar" />
+            <div class="member-avatar-ring"></div>
+          </div>
+          <div class="member-info">
+            <span class="member-name">Andi Ahmad Naufal Madani</span>
+            <span class="member-nim">NIM 241011128</span>
+          </div>
+        </div>
+
+        <!-- Anggota 6 -->
+        <div class="member-card">
+          <div class="member-avatar-wrap">
+            <img src="img/mrwajo.png" alt="Foto MR Wajo" class="member-avatar" />
+            <div class="member-avatar-ring"></div>
+          </div>
+          <div class="member-info">
+            <span class="member-name">MR Wajo</span>
+            <span class="member-nim">NIM 241011103</span>
+          </div>
+        </div>
+
+      </div><!-- /member-grid -->
+    </div><!-- /container -->
+  </header>
+
+  <main>
+    <div class="container">
+
+      <!-- ============================================================
+       POIN 1 & 2 — INPUT & TAMPILKAN GAMBAR ASLI
+  ============================================================ -->
+      <section class="section" id="sec-upload">
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-icon icon-blue">📂</div>
+            <div class="section-title-group">
+              <h2>Input Gambar</h2>
+              <p>Upload gambar untuk memulai seluruh proses pengolahan citra</p>
+            </div>
+            <span class="poin-badge">Poin 1 &amp; 2</span>
+          </div>
+
+          <!-- Area upload (drag & drop / klik) -->
+          <div class="upload-zone" id="upload-zone">
+            <input type="file" id="file-input" accept="image/*" />
+            <div class="upload-icon">🖼️</div>
+            <h3>Klik atau Drag &amp; Drop Gambar</h3>
+            <p>Mendukung format JPG, PNG, WebP, BMP, GIF</p>
+          </div>
+
+          <!-- Tampilan gambar asli + info file (tersembunyi sebelum upload) -->
+          <div id="original-display" class="hidden" style="margin-top:20px;">
+            <div class="row-two">
+              <div>
+                <p style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:10px;">Gambar Asli
+                  (Original)</p>
+                <div class="canvas-single">
+                  <div class="canvas-label"><span class="dot"></span>Citra Input — Proporsional 300px</div>
+                  <canvas id="canvas-original"></canvas>
+                </div>
+              </div>
+              <div id="file-info"
+                style="padding:16px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:var(--radius-md);font-size:13px;">
+                <p style="font-weight:700;font-size:15px;margin-bottom:12px;color:var(--text-primary);">📋 Info Gambar
+                </p>
+                <table style="width:100%;border-collapse:collapse;">
+                  <tr>
+                    <td style="color:var(--text-muted);padding:4px 0;">Nama File</td>
+                    <td id="info-name" style="color:var(--text-primary);font-family:monospace;font-size:12px;"></td>
+                  </tr>
+                  <tr>
+                    <td style="color:var(--text-muted);padding:4px 0;">Ukuran File</td>
+                    <td id="info-size" style="color:var(--text-primary);"></td>
+                  </tr>
+                  <tr>
+                    <td style="color:var(--text-muted);padding:4px 0;">Resolusi Asli</td>
+                    <td id="info-res" style="color:var(--text-primary);"></td>
+                  </tr>
+                  <tr>
+                    <td style="color:var(--text-muted);padding:4px 0;">Resolusi Display</td>
+                    <td id="info-display-res" style="color:var(--text-primary);"></td>
+                  </tr>
+                  <tr>
+                    <td style="color:var(--text-muted);padding:4px 0;">Tipe</td>
+                    <td id="info-type" style="color:var(--text-primary);"></td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+       POIN 3.1 — KONVERSI GRAYSCALE
+  ============================================================ -->
+      <section class="section" id="sec-gray">
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-icon icon-purple">🔲</div>
+            <div class="section-title-group">
+              <h2>Konversi Grayscale</h2>
+              <p>Formula: Gray = 0.299·R + 0.587·G + 0.114·B</p>
+            </div>
+            <span class="poin-badge">Poin 3.1</span>
+          </div>
+          <div id="gray-placeholder" class="placeholder-msg"><span class="emoji">⬆️</span>Upload gambar terlebih dahulu
+          </div>
+          <div id="gray-content" class="hidden">
+            <div class="canvas-single">
+              <div class="canvas-label"><span class="dot"></span>Citra Grayscale</div>
+              <canvas id="canvas-gray"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+       POIN 3.2 — CITRA BINER (THRESHOLDING)
+  ============================================================ -->
+      <section class="section" id="sec-binary">
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-icon icon-cyan">⬛</div>
+            <div class="section-title-group">
+              <h2>Citra Biner (Thresholding)</h2>
+              <p>Piksel &gt; threshold → putih (255), piksel ≤ threshold → hitam (0)</p>
+            </div>
+            <span class="poin-badge">Poin 3.2</span>
+          </div>
+          <div id="binary-placeholder" class="placeholder-msg"><span class="emoji">⬆️</span>Upload gambar terlebih
+            dahulu</div>
+          <div id="binary-content" class="hidden">
+            <div class="control-row">
+              <span class="control-label">🎚️ Threshold</span>
+              <div class="slider-wrapper">
+                <input type="range" id="slider-threshold" min="0" max="255" value="127" />
+                <span class="slider-value" id="val-threshold">127</span>
+              </div>
+            </div>
+            <div class="canvas-single">
+              <div class="canvas-label"><span class="dot"></span>Citra Biner — Threshold: <span
+                  id="lbl-threshold">127</span></div>
+              <canvas id="canvas-binary"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+       POIN 3.3 — OPERASI ARITMATIKA (BRIGHTNESS)
+  ============================================================ -->
+      <section class="section" id="sec-arith">
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-icon icon-amber">☀️</div>
+            <div class="section-title-group">
+              <h2>Operasi Aritmatika — Brightness</h2>
+              <p>Menambah/mengurangi nilai piksel secara seragam (clamp 0–255)</p>
+            </div>
+            <span class="poin-badge">Poin 3.3</span>
+          </div>
+          <div id="arith-placeholder" class="placeholder-msg"><span class="emoji">⬆️</span>Upload gambar terlebih dahulu
+          </div>
+          <div id="arith-content" class="hidden">
+            <div class="control-row">
+              <span class="control-label">🔆 Brightness</span>
+              <div class="slider-wrapper">
+                <input type="range" id="slider-brightness" min="-100" max="150" value="75" />
+                <span class="slider-value" id="val-brightness">+75</span>
+              </div>
+            </div>
+            <div class="canvas-single">
+              <div class="canvas-label"><span class="dot"></span>Citra Brightness Adjusted</div>
+              <canvas id="canvas-arith"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+       POIN 3.4 — OPERASI LOGIKA (BITWISE AND + NOT)
+  ============================================================ -->
+      <section class="section" id="sec-logic">
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-icon icon-green">🔀</div>
+            <div class="section-title-group">
+              <h2>Operasi Logika</h2>
+              <p>Bitwise AND dengan nilai konstan &amp; Citra Negatif (Bitwise NOT)</p>
+            </div>
+            <span class="poin-badge">Poin 3.4</span>
+          </div>
+          <div id="logic-placeholder" class="placeholder-msg"><span class="emoji">⬆️</span>Upload gambar terlebih dahulu
+          </div>
+          <div id="logic-content" class="hidden">
+            <div class="control-row">
+              <span class="control-label">⚙️ Nilai Bit</span>
+              <div class="slider-wrapper">
+                <input type="range" id="slider-bitand" min="0" max="255" value="255" />
+                <span class="slider-value" id="val-bitand">255</span>
+              </div>
+            </div>
+            <div class="canvas-grid" style="grid-template-columns:1fr 1fr;max-width:640px;">
+              <div class="canvas-item">
+                <div class="canvas-label"><span class="dot"></span>Bitwise AND (Interaktif)</div>
+                <canvas id="canvas-bitand"></canvas>
+              </div>
+              <div class="canvas-item">
+                <div class="canvas-label"><span class="dot"></span>Citra Negatif (NOT)</div>
+                <canvas id="canvas-not"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+       OPTIONAL 1 — HISTOGRAM INTENSITAS
+  ============================================================ -->
+      <section class="section" id="sec-histogram">
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-icon icon-rose">📊</div>
+            <div class="section-title-group">
+              <h2>Histogram Intensitas</h2>
+              <p>Distribusi nilai piksel pada ruang warna RGB, Grayscale, dan HSV</p>
+            </div>
+            <span class="poin-badge">Optional +10</span>
+          </div>
+          <div id="hist-placeholder" class="placeholder-msg"><span class="emoji">⬆️</span>Upload gambar terlebih dahulu
+          </div>
+          <div id="hist-content" class="hidden">
+            <!-- Tab navigasi histogram -->
+            <div class="tab-nav">
+              <button class="tab-btn active" data-tab="hist-rgb">🎨 RGB</button>
+              <button class="tab-btn" data-tab="hist-gray">🔲 Grayscale</button>
+              <button class="tab-btn" data-tab="hist-hsv">🌈 HSV Value</button>
+            </div>
+            <div class="tab-panel active" id="hist-rgb">
+              <div class="chart-container"><canvas id="chart-rgb"></canvas></div>
+            </div>
+            <div class="tab-panel" id="hist-gray">
+              <div class="chart-container"><canvas id="chart-gray"></canvas></div>
+            </div>
+            <div class="tab-panel" id="hist-hsv">
+              <div class="chart-container"><canvas id="chart-hsv"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+       OPTIONAL 2 — KONVOLUSI / FILTERING
+  ============================================================ -->
+      <section class="section" id="sec-conv">
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-icon icon-pink">🔍</div>
+            <div class="section-title-group">
+              <h2>Konvolusi / Filtering</h2>
+              <p>Aplikasi berbagai kernel konvolusi 3×3 pada citra asli</p>
+            </div>
+            <span class="poin-badge">Optional +20</span>
+          </div>
+          <div id="conv-placeholder" class="placeholder-msg"><span class="emoji">⬆️</span>Upload gambar terlebih dahulu
+          </div>
+          <div id="conv-content" class="hidden">
+            <!-- Diisi secara dinamis oleh script.js -->
+            <div class="conv-grid" id="conv-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+       OPTIONAL 3 — OPERASI MORFOLOGI
+  ============================================================ -->
+      <section class="section" id="sec-morph">
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-icon icon-teal">🔬</div>
+            <div class="section-title-group">
+              <h2>Operasi Morfologi</h2>
+              <p>Erosi &amp; Dilasi dengan 7 kernel berbeda (Kotak, Plus, Cross, dll.)</p>
+            </div>
+            <span class="poin-badge">Optional +Bonus</span>
+          </div>
+          <div id="morph-placeholder" class="placeholder-msg"><span class="emoji">⬆️</span>Upload gambar terlebih dahulu
+          </div>
+          <div id="morph-content" class="hidden">
+            <!-- Diisi secara dinamis oleh script.js -->
+            <div id="morph-sections"></div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /container -->
+  </main>
+
+  <!-- ============================================================
+     FOOTER
+============================================================ -->
+  <footer>
+    <div class="container">
+      <p>Tugas Praktikum Pengolahan Citra Digital &nbsp;·&nbsp; Rekayasa Perangkat Lunak Semester 4</p>
+      <p style="margin-top:6px;">
+        <span>M. Arkan Naim</span> &nbsp;·&nbsp;
+        <span>M. Akmal Ahsan</span> &nbsp;·&nbsp;
+        <span>Syahrul Ramadhan</span> &nbsp;·&nbsp;
+        <span>M. Alfatih Syaefuddin</span> &nbsp;·&nbsp;
+        <span>A.A. Naufal Madani</span> &nbsp;·&nbsp;
+        <span>MR Wajo</span>
+      </p>
+      <p style="margin-top:6px;">Institut Teknologi Bacharuddin Jusuf Habibie (ITH)</p>
+    </div>
+  </footer>
+
+  <!-- Script utama (diletakkan di akhir body agar DOM sudah siap) -->
+  <script src="script.js"></script>
+
+</body>
+
+</html>
