@@ -1,23 +1,22 @@
-// ==============================================================
-// TUGAS PRAKTIKUM PENGOLAHAN CITRA DIGITAL
-// Nama          : Naufal Madani
-// NIM           : 241011128
-// Program Studi : Rekayasa Perangkat Lunak - Semester 4
-// Kampus        : Institut Teknologi Bacharuddin Jusuf Habibie (ITH)
-// File          : script.js — Image Processing Engine
-// ==============================================================
 
 /* ================================================================
    GLOBAL STATE
 ================================================================ */
 let imgData  = null;   // original proportional ImageData
 let grayData = null;   // grayscale ImageData
+let normData = null;   // TAMBAHAN: normalized (equalized) ImageData
 let imgW     = 0;
 let imgH     = 0;
 
 let chartRGB  = null;
 let chartGray = null;
 let chartHSV  = null;
+let chartNorm = null;  // TAMBAHAN: instance chart histogram normalisasi
+
+// Normalisasi gambar (Min-Max)
+let chartNormBefore = null;  // chart histogram sebelum normalisasi
+let chartNormAfter  = null;  // chart histogram sesudah normalisasi
+let currentNormMode = 'gray'; // 'gray' atau 'rgb'
 
 /* ================================================================
    SCROLL REVEAL
@@ -113,6 +112,10 @@ function processFile(file) {
 
     // Jalankan semua proses pengolahan citra
     computeGrayscale();
+    
+    // TAMBAHAN: Eksekusi normalisasi histogram tepat setelah grayscale siap
+    computeNormalization();
+
     showAllSections();
 
     URL.revokeObjectURL(url);
@@ -130,7 +133,7 @@ function formatBytes(b) {
 
 /** Tampilkan semua section setelah gambar diupload */
 function showAllSections() {
-  ['gray', 'binary', 'arith', 'logic', 'hist', 'conv', 'morph'].forEach(key => {
+  ['gray', 'binary', 'arith', 'logic', 'hist', 'norm', 'conv', 'morph'].forEach(key => {
     const ph = document.getElementById(key + '-placeholder');
     const ct = document.getElementById(key + '-content');
     if (ph) ph.classList.add('hidden');
@@ -142,6 +145,7 @@ function showAllSections() {
   renderBitand();
   renderNot();
   buildHistograms();
+  buildImageNormalization();
   buildConvolutions();
   buildMorphology();
 }
@@ -151,9 +155,11 @@ function showAllSections() {
 ================================================================ */
 function renderImageDataToCanvas(canvasId, data, w, h) {
   const canvas  = document.getElementById(canvasId);
-  canvas.width  = w;
-  canvas.height = h;
-  canvas.getContext('2d').putImageData(data, 0, 0);
+  if (canvas) {
+    canvas.width  = w;
+    canvas.height = h;
+    canvas.getContext('2d').putImageData(data, 0, 0);
+  }
 }
 
 /* ================================================================
@@ -176,11 +182,266 @@ function computeGrayscale() {
 }
 
 /* ================================================================
+   TAMBAHAN: FITUR NORMALISASI (EKUALISASI) HISTOGRAM MANUAL
+================================================================ */
+function computeNormalization() {
+  if (!grayData) return;
+  
+  const src = grayData.data;
+  const out = new ImageData(imgW, imgH);
+  const d   = out.data;
+  const totalPixels = imgW * imgH;
+
+  // Langkah 1: Hitung histogram frekuensi keabuan
+  let hist = new Array(256).fill(0);
+  for (let i = 0; i < src.length; i += 4) {
+    hist[src[i]]++;
+  }
+
+  // Langkah 2: Hitung nilai Kumulatif Distribusi (CDF)
+  let cdf = new Array(256).fill(0);
+  cdf[0] = hist[0];
+  for (let i = 1; i < 256; i++) {
+    cdf[i] = cdf[i - 1] + hist[i];
+  }
+
+  // Langkah 3: Cari CDF minimum yang bernilai lebih besar dari 0
+  let cdfMin = 0;
+  for (let i = 0; i < 256; i++) {
+    if (cdf[i] > 0) {
+      cdfMin = cdf[i];
+      break;
+    }
+  }
+
+  // Langkah 4: Buat Lookup Table (LUT) pemetaan intensitas baru
+  let lut = new Array(256).fill(0);
+  for (let i = 0; i < 256; i++) {
+    lut[i] = Math.round(((cdf[i] - cdfMin) / (totalPixels - cdfMin)) * 255);
+    lut[i] = clamp(lut[i]);
+  }
+
+  // Langkah 5: Petakan kembali seluruh piksel gambar menggunakan tabel LUT
+  for (let i = 0; i < src.length; i += 4) {
+    const newGray = lut[src[i]];
+    d[i] = d[i + 1] = d[i + 2] = newGray;
+    d[i + 3] = 255;
+  }
+
+  normData = out;
+  // Memproyeksikan hasil ke canvas-normalize yang akan Anda buat di HTML
+  renderImageDataToCanvas('canvas-normalize', out, imgW, imgH);
+}
+
+/* ================================================================
+   FITUR NORMALISASI GAMBAR (MIN-MAX IMAGE NORMALIZATION)
+   Berbeda dari ekualisasi histogram — ini meregangkan rentang
+   intensitas piksel dari [min, max] asli → [0, 255]
+================================================================ */
+
+/**
+ * Mengganti mode normalisasi (grayscale atau RGB per-channel)
+ * dan menjalankan ulang kalkulasi normalisasi.
+ */
+function setNormMode(mode) {
+  currentNormMode = mode;
+
+  document.getElementById('norm-btn-gray').classList.toggle('active', mode === 'gray');
+  document.getElementById('norm-btn-rgb').classList.toggle('active', mode === 'rgb');
+
+  document.getElementById('norm-formula-gray').classList.toggle('active', mode === 'gray');
+  document.getElementById('norm-formula-gray').classList.toggle('hidden', mode !== 'gray');
+  document.getElementById('norm-formula-rgb').classList.toggle('active', mode === 'rgb');
+  document.getElementById('norm-formula-rgb').classList.toggle('hidden', mode !== 'rgb');
+
+  buildImageNormalization();
+}
+
+/**
+ * Fungsi utama normalisasi gambar.
+ * Mode 'gray': normalisasi pada citra grayscale.
+ * Mode 'rgb' : normalisasi setiap channel R, G, B secara independen.
+ */
+function buildImageNormalization() {
+  if (!imgData || !grayData) return;
+
+  let beforeData, afterData;
+  let beforeValues, afterValues;
+
+  if (currentNormMode === 'gray') {
+    // ── Mode Grayscale ──────────────────────────────────────────
+    // Ambil nilai grayscale semua piksel
+    const gs = grayData.data;
+    const vals = [];
+    for (let i = 0; i < gs.length; i += 4) vals.push(gs[i]);
+
+    const gMin = Math.min(...vals);
+    const gMax = Math.max(...vals);
+    const range = gMax - gMin;
+
+    // Buat ImageData before (grayscale asli)
+    beforeData = new ImageData(imgW, imgH);
+    for (let i = 0; i < gs.length; i += 4) {
+      beforeData.data[i] = beforeData.data[i+1] = beforeData.data[i+2] = gs[i];
+      beforeData.data[i+3] = 255;
+    }
+
+    // Buat ImageData after (normalisasi min-max)
+    afterData = new ImageData(imgW, imgH);
+    for (let i = 0; i < gs.length; i += 4) {
+      const normalized = range === 0 ? 0 : Math.round(((gs[i] - gMin) / range) * 255);
+      afterData.data[i] = afterData.data[i+1] = afterData.data[i+2] = normalized;
+      afterData.data[i+3] = 255;
+    }
+
+    beforeValues = vals;
+    afterValues  = [];
+    const ad = afterData.data;
+    for (let i = 0; i < ad.length; i += 4) afterValues.push(ad[i]);
+
+  } else {
+    // ── Mode RGB Per-Channel ────────────────────────────────────
+    const src = imgData.data;
+    const rVals = [], gVals = [], bVals = [];
+    for (let i = 0; i < src.length; i += 4) {
+      rVals.push(src[i]);
+      gVals.push(src[i+1]);
+      bVals.push(src[i+2]);
+    }
+
+    const rMin = Math.min(...rVals), rMax = Math.max(...rVals), rRange = rMax - rMin;
+    const gMin = Math.min(...gVals), gMax = Math.max(...gVals), gRange = gMax - gMin;
+    const bMin = Math.min(...bVals), bMax = Math.max(...bVals), bRange = bMax - bMin;
+
+    // Before = gambar asli (RGB)
+    beforeData = new ImageData(imgW, imgH);
+    for (let i = 0; i < src.length; i++) beforeData.data[i] = src[i];
+
+    // After = normalisasi per channel
+    afterData = new ImageData(imgW, imgH);
+    for (let i = 0; i < src.length; i += 4) {
+      afterData.data[i]   = rRange === 0 ? 0 : Math.round(((src[i]   - rMin) / rRange) * 255);
+      afterData.data[i+1] = gRange === 0 ? 0 : Math.round(((src[i+1] - gMin) / gRange) * 255);
+      afterData.data[i+2] = bRange === 0 ? 0 : Math.round(((src[i+2] - bMin) / bRange) * 255);
+      afterData.data[i+3] = 255;
+    }
+
+    // Hitung brightness (luminance) untuk statistik
+    beforeValues = [];
+    afterValues  = [];
+    for (let i = 0; i < src.length; i += 4) {
+      beforeValues.push(Math.round(0.299 * src[i] + 0.587 * src[i+1] + 0.114 * src[i+2]));
+    }
+    const ad = afterData.data;
+    for (let i = 0; i < ad.length; i += 4) {
+      afterValues.push(Math.round(0.299 * ad[i] + 0.587 * ad[i+1] + 0.114 * ad[i+2]));
+    }
+  }
+
+  // Render gambar ke canvas
+  renderImageDataToCanvas('canvas-norm-before', beforeData, imgW, imgH);
+  renderImageDataToCanvas('canvas-norm-after',  afterData,  imgW, imgH);
+
+  // Hitung dan tampilkan statistik
+  displayNormStats(beforeValues, afterValues);
+
+  // Render histogram perbandingan
+  buildNormHistograms(beforeValues, afterValues);
+}
+
+/** Hitung statistik array nilai piksel dan tampilkan ke tabel */
+function displayNormStats(beforeVals, afterVals) {
+  const calc = (vals) => {
+    const n    = vals.length;
+    const mn   = Math.min(...vals);
+    const mx   = Math.max(...vals);
+    const mean = vals.reduce((a, b) => a + b, 0) / n;
+    const variance = vals.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
+    const std  = Math.sqrt(variance);
+    return { min: mn, max: mx, mean: mean.toFixed(2), std: std.toFixed(2), range: mx - mn };
+  };
+
+  const b = calc(beforeVals);
+  const a = calc(afterVals);
+
+  document.getElementById('stat-before-min').textContent   = b.min;
+  document.getElementById('stat-before-max').textContent   = b.max;
+  document.getElementById('stat-before-mean').textContent  = b.mean;
+  document.getElementById('stat-before-std').textContent   = b.std;
+  document.getElementById('stat-before-range').textContent = b.range;
+
+  document.getElementById('stat-after-min').textContent   = a.min;
+  document.getElementById('stat-after-max').textContent   = a.max;
+  document.getElementById('stat-after-mean').textContent  = a.mean;
+  document.getElementById('stat-after-std').textContent   = a.std;
+  document.getElementById('stat-after-range').textContent = a.range;
+}
+
+/** Buat histogram Chart.js: sebelum & sesudah normalisasi */
+function buildNormHistograms(beforeVals, afterVals) {
+  const makeHist = (vals) => {
+    const h = new Array(256).fill(0);
+    vals.forEach(v => h[clamp(v)]++);
+    return h;
+  };
+
+  const labels    = Array.from({ length: 256 }, (_, i) => i);
+  const histBefore = makeHist(beforeVals);
+  const histAfter  = makeHist(afterVals);
+
+  const baseCfg = (data, color, bgColor) => ({
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Frekuensi',
+        data,
+        backgroundColor: bgColor,
+        borderColor: color,
+        borderWidth: 0,
+        barPercentage: 1,
+        categoryPercentage: 1
+      }]
+    },
+    options: {
+      animation: false,
+      responsive: true,
+      maintainAspectRatio: false,
+      elements: { point: { radius: 0 } },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#64748b', maxTicksLimit: 10, font: { family: 'JetBrains Mono', size: 9 } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 9 } }
+        }
+      },
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
+
+  if (chartNormBefore) chartNormBefore.destroy();
+  if (chartNormAfter)  chartNormAfter.destroy();
+
+  chartNormBefore = new Chart(
+    document.getElementById('chart-norm-before'),
+    baseCfg(histBefore, 'rgba(148,163,184,0.8)', 'rgba(148,163,184,0.25)')
+  );
+  chartNormAfter = new Chart(
+    document.getElementById('chart-norm-after'),
+    baseCfg(histAfter, 'rgba(16,185,129,0.8)', 'rgba(16,185,129,0.2)')
+  );
+}
+
+/* ================================================================
    POIN 3.2 — CITRA BINER (THRESHOLDING)
-   Piksel > threshold → putih (255), ≤ threshold → hitam (0)
 ================================================================ */
 const sliderThreshold = document.getElementById('slider-threshold');
-sliderThreshold.addEventListener('input', renderBinary);
+if (sliderThreshold) sliderThreshold.addEventListener('input', renderBinary);
 
 function renderBinary() {
   if (!grayData) return;
@@ -205,10 +466,9 @@ function renderBinary() {
 
 /* ================================================================
    POIN 3.3 — OPERASI ARITMATIKA (BRIGHTNESS)
-   Setiap piksel ditambah/dikurangi nilai beta, di-clamp ke 0–255
 ================================================================ */
 const sliderBrightness = document.getElementById('slider-brightness');
-sliderBrightness.addEventListener('input', renderBrightness);
+if (sliderBrightness) sliderBrightness.addEventListener('input', renderBrightness);
 
 function renderBrightness() {
   if (!imgData) return;
@@ -233,11 +493,9 @@ function renderBrightness() {
 
 /* ================================================================
    POIN 3.4 — OPERASI LOGIKA
-   a) Bitwise AND dengan nilai konstan (slider)
-   b) Citra Negatif (Bitwise NOT)
 ================================================================ */
 const sliderBitand = document.getElementById('slider-bitand');
-sliderBitand.addEventListener('input', renderBitand);
+if (sliderBitand) sliderBitand.addEventListener('input', renderBitand);
 
 function renderBitand() {
   if (!imgData) return;
@@ -278,12 +536,10 @@ function renderNot() {
 }
 
 /* ================================================================
-   OPTIONAL 1 — HISTOGRAM
-   Menghitung distribusi frekuensi nilai piksel (0–255)
-   untuk channel RGB, Grayscale, dan HSV Value
+   OPTIONAL 1 — HISTOGRAM (TERMASUK HISTOGRAM NORMALISASI)
 ================================================================ */
 function buildHistograms() {
-  if (!imgData || !grayData) return;
+  if (!imgData || !grayData || !normData) return;
 
   // Hitung histogram RGB
   const rHist = new Array(256).fill(0);
@@ -308,6 +564,11 @@ function buildHistograms() {
     const v = rgbToHSV(src[i], src[i + 1], src[i + 2]).v;
     vHist[Math.round(v * 255)]++;
   }
+
+  // TAMBAHAN: Hitung histogram dari data hasil Ekualisasi (Normalisasi)
+  const nHist = new Array(256).fill(0);
+  const ns = normData.data;
+  for (let i = 0; i < ns.length; i += 4) nHist[ns[i]]++;
 
   const labels = Array.from({ length: 256 }, (_, i) => i);
 
@@ -340,6 +601,7 @@ function buildHistograms() {
   if (chartRGB)  chartRGB.destroy();
   if (chartGray) chartGray.destroy();
   if (chartHSV)  chartHSV.destroy();
+  if (chartNorm) chartNorm.destroy(); // TAMBAHAN
 
   chartRGB = new Chart(document.getElementById('chart-rgb'), chartCfg([
     { label: 'Red',   data: rHist, borderColor: '#f87171', borderWidth: 1.5, fill: false },
@@ -368,11 +630,22 @@ function buildHistograms() {
       backgroundColor: 'rgba(192,132,252,0.08)'
     }
   ]));
+
+  // TAMBAHAN: Instansiasi objek grafik histogram baru untuk normalisasi
+  chartNorm = new Chart(document.getElementById('chart-normalize'), chartCfg([
+    {
+      label: 'Equalized Histogram',
+      data: nHist,
+      borderColor: '#10b981', // Hijau aksen sukses
+      borderWidth: 2,
+      fill: true,
+      backgroundColor: 'rgba(16,185,129,0.08)'
+    }
+  ]));
 }
 
 /* ================================================================
    OPTIONAL 2 — KONVOLUSI / FILTERING
-   Definisi 5 kernel konvolusi 3×3
 ================================================================ */
 const KERNELS = [
   {
@@ -422,7 +695,6 @@ const KERNELS = [
   }
 ];
 
-/** Membangun grid konvolusi dan menampilkan hasilnya */
 function buildConvolutions() {
   if (!imgData) return;
 
@@ -444,20 +716,17 @@ function buildConvolutions() {
     `;
     grid.appendChild(item);
 
-    // Render setelah elemen ada di DOM
     requestAnimationFrame(() => {
       const canvas  = document.getElementById(canvasId);
-      canvas.width  = imgW;
-      canvas.height = imgH;
-      canvas.getContext('2d').putImageData(result, 0, 0);
+      if (canvas) {
+        canvas.width  = imgW;
+        canvas.height = imgH;
+        canvas.getContext('2d').putImageData(result, 0, 0);
+      }
     });
   });
 }
 
-/**
- * Membuat HTML visual untuk menampilkan nilai kernel
- * Nilai positif → biru, negatif → merah, nol → abu-abu
- */
 function buildKernelHTML(k) {
   let html = `<div class="kernel-display" style="grid-template-columns:repeat(${k[0].length},36px)">`;
 
@@ -473,10 +742,6 @@ function buildKernelHTML(k) {
   return html;
 }
 
-/**
- * Menerapkan konvolusi 2D pada ImageData menggunakan kernel yang diberikan
- * Menggunakan border-clamp (batas piksel dijaga dalam range gambar)
- */
 function applyConvolution(imageData, kernel, w, h) {
   const src = imageData.data;
   const out = new ImageData(w, h);
@@ -515,7 +780,6 @@ function applyConvolution(imageData, kernel, w, h) {
 
 /* ================================================================
    OPTIONAL 3 — OPERASI MORFOLOGI
-   7 Kernel × 2 Operasi (Erosi & Dilasi) = 14 Output
 ================================================================ */
 const MORPH_KERNELS = [
   {
@@ -555,7 +819,6 @@ const MORPH_KERNELS = [
   }
 ];
 
-/** Membangun semua section morfologi secara dinamis */
 function buildMorphology() {
   if (!imgData) return;
 
@@ -592,19 +855,16 @@ function buildMorphology() {
     requestAnimationFrame(() => {
       [[erosionId, eroded], [dilationId, dilated]].forEach(([id, data]) => {
         const c  = document.getElementById(id);
-        c.width  = imgW;
-        c.height = imgH;
-        c.getContext('2d').putImageData(data, 0, 0);
+        if (c) {
+          c.width  = imgW;
+          c.height = imgH;
+          c.getContext('2d').putImageData(data, 0, 0);
+        }
       });
     });
   });
 }
 
-/**
- * Menerapkan operasi morfologi (erosi atau dilasi) pada ImageData
- * - Erosi  : output = nilai minimum piksel dalam area kernel
- * - Dilasi : output = nilai maksimum piksel dalam area kernel
- */
 function applyMorphology(imageData, kernel, w, h, op) {
   const src = imageData.data;
   const out = new ImageData(w, h);
@@ -667,20 +927,14 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
    UTILITY FUNCTIONS
 ================================================================ */
 
-/** Memastikan nilai piksel tetap dalam rentang 0–255 */
 function clamp(v) {
   return Math.max(0, Math.min(255, v));
 }
 
-/** Memastikan koordinat tetap dalam batas dimensi gambar */
 function clampCoord(v, max) {
   return Math.max(0, Math.min(max - 1, v));
 }
 
-/**
- * Konversi warna dari RGB ke HSV
- * @returns {object} { h: [0,1], s: [0,1], v: [0,1] }
- */
 function rgbToHSV(r, g, b) {
   r /= 255; g /= 255; b /= 255;
   const max = Math.max(r, g, b);
