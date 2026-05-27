@@ -199,7 +199,12 @@
               <div class="download-bar">
                 <span class="dl-label">Unduh hasil konversi</span>
                 <button class="download-btn" onclick="downloadCanvas('canvas-gray', 'grayscale')" id="btn-dl-gray">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
                   <span>Unduh PNG</span>
                 </button>
               </div>
@@ -221,25 +226,89 @@
           <div id="binary-placeholder" class="placeholder-msg"><span class="emoji">⬆️</span>Upload gambar terlebih
             dahulu</div>
           <div id="binary-content" class="hidden">
-            <div class="control-row">
-              <span class="control-label">🎚️ Threshold</span>
-              <div class="slider-wrapper">
-                <input type="range" id="slider-threshold" min="0" max="255" value="127" />
-                <span class="slider-value" id="val-threshold">127</span>
+
+            <!-- ─── GRID SIDE-BY-SIDE: MANUAL + OTSU ─────────────────────── -->
+            <div class="binary-side-by-side">
+
+              <!-- MANUAL THRESHOLDING -->
+              <div class="binary-method-block">
+                <div class="binary-method-title">
+                  <span class="binary-method-badge badge-manual">Manual</span>
+                  <span>Atur threshold secara manual menggunakan slider</span>
+                </div>
+                <div class="control-row">
+                  <span class="control-label">🎚️ Threshold</span>
+                  <div class="slider-wrapper">
+                    <input type="range" id="slider-threshold" min="0" max="255" value="127" />
+                    <span class="slider-value" id="val-threshold">127</span>
+                  </div>
+                </div>
+                <div class="canvas-single">
+                  <div class="canvas-label"><span class="dot"></span>Citra Biner Manual — Threshold: <span
+                      id="lbl-threshold">127</span></div>
+                  <canvas id="canvas-binary"></canvas>
+                  <div class="download-bar">
+                    <span class="dl-label">Unduh hasil konversi</span>
+                    <button class="download-btn" onclick="downloadCanvas('canvas-binary', 'binary-threshold')"
+                      id="btn-dl-binary">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      <span>Unduh PNG</span>
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="canvas-single">
-              <div class="canvas-label"><span class="dot"></span>Citra Biner — Threshold: <span
-                  id="lbl-threshold">127</span></div>
-              <canvas id="canvas-binary"></canvas>
-              <div class="download-bar">
-                <span class="dl-label">Unduh hasil konversi</span>
-                <button class="download-btn" onclick="downloadCanvas('canvas-binary', 'binary-threshold')" id="btn-dl-binary">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  <span>Unduh PNG</span>
-                </button>
+
+              <!-- OTSU THRESHOLDING -->
+              <div class="binary-method-block">
+                <div class="binary-method-title">
+                  <span class="binary-method-badge badge-otsu">Otsu</span>
+                  <span>Threshold optimal dihitung otomatis dari histogram gambar</span>
+                </div>
+
+                <!-- Info box Otsu -->
+                <div class="otsu-info-box">
+                  <div class="otsu-info-row">
+                    <span class="otsu-info-label">📐 Formula</span>
+                    <span class="otsu-info-value">σ²<sub>B</sub> = w<sub>B</sub> · w<sub>F</sub> · (μ<sub>B</sub> −
+                      μ<sub>F</sub>)²</span>
+                  </div>
+                  <div class="otsu-info-row">
+                    <span class="otsu-info-label">🎯 Threshold Optimal</span>
+                    <span class="otsu-info-value" id="otsu-threshold-display">—</span>
+                  </div>
+                  <div class="otsu-info-row">
+                    <span class="otsu-info-label">📊 Varian Maks (σ²<sub>B</sub>)</span>
+                    <span class="otsu-info-value" id="otsu-variance-display">—</span>
+                  </div>
+                </div>
+
+                <div class="canvas-single">
+                  <div class="canvas-label"><span class="dot" style="background:#06b6d4;"></span>Citra Biner Otsu —
+                    Threshold Otomatis: <span id="lbl-otsu-threshold">—</span></div>
+                  <canvas id="canvas-binary-otsu"></canvas>
+                  <div class="download-bar">
+                    <span class="dl-label">Unduh hasil konversi</span>
+                    <button class="download-btn" onclick="downloadCanvas('canvas-binary-otsu', 'binary-otsu-threshold')"
+                      id="btn-dl-binary-otsu">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      <span>Unduh PNG</span>
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
+
+            </div><!-- /binary-side-by-side -->
+
           </div>
         </div>
       </section>
@@ -249,35 +318,186 @@
           <div class="section-header">
             <div class="section-icon icon-amber">☀️</div>
             <div class="section-title-group">
-              <h2>Operasi Aritmatika — Brightness</h2>
-              <p>Menambah/mengurangi nilai piksel secara seragam (clamp 0–255)</p>
+              <h2>Operasi Aritmatika</h2>
+              <p>Brightness (tambah/kurang) &amp; Operasi Konstanta: Tambah, Kurang, Kali, Bagi — clamp 0–255</p>
             </div>
             <span class="poin-badge">Metode 4</span>
           </div>
           <div id="arith-placeholder" class="placeholder-msg"><span class="emoji">⬆️</span>Upload gambar terlebih dahulu
           </div>
           <div id="arith-content" class="hidden">
-            <div class="control-row">
-              <span class="control-label">🔆 Brightness</span>
+
+            <!-- ── BRIGHTNESS (slider negatif–positif) ───────────────── -->
+            <div class="arith-method-block">
+              <div class="arith-method-title">
+                <span class="arith-badge badge-brightness">Brightness</span>
+                <span>Tambah / kurangi nilai piksel secara seragam</span>
+              </div>
+              <div class="control-row">
+                <span class="control-label">🔆 Beta (β)</span>
+                <div class="slider-wrapper">
+                  <input type="range" id="slider-brightness" min="-100" max="150" value="75" />
+                  <span class="slider-value" id="val-brightness">+75</span>
+                </div>
+              </div>
+              <div class="arith-formula-tag">
+                Piksel_out = clamp(Piksel_in <strong>+</strong> β, 0, 255)
+              </div>
+              <div class="canvas-single">
+                <div class="canvas-label"><span class="dot"></span>Citra Brightness Adjusted — β = <span
+                    id="lbl-brightness">+75</span></div>
+                <canvas id="canvas-arith"></canvas>
+                <div class="download-bar">
+                  <span class="dl-label">Unduh hasil konversi</span>
+                  <button class="download-btn" onclick="downloadCanvas('canvas-arith', 'brightness-adjusted')"
+                    id="btn-dl-arith">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    <span>Unduh PNG</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── SEPARATOR ──────────────────────────────────────────── -->
+            <div class="arith-divider">
+              <span>Operasi dengan Konstanta (k)</span>
+            </div>
+
+            <!-- ── SLIDER KONSTANTA (shared) ─────────────────────────── -->
+            <div class="control-row" style="margin-bottom:24px;">
+              <span class="control-label">🔢 Konstanta (k)</span>
               <div class="slider-wrapper">
-                <input type="range" id="slider-brightness" min="-100" max="150" value="75" />
-                <span class="slider-value" id="val-brightness">+75</span>
+                <input type="range" id="slider-const" min="1" max="100" value="30" />
+                <span class="slider-value" id="val-const">30</span>
               </div>
             </div>
-            <div class="canvas-single">
-              <div class="canvas-label"><span class="dot"></span>Citra Brightness Adjusted</div>
-              <canvas id="canvas-arith"></canvas>
-              <div class="download-bar">
-                <span class="dl-label">Unduh hasil konversi</span>
-                <button class="download-btn" onclick="downloadCanvas('canvas-arith', 'brightness-adjusted')" id="btn-dl-arith">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  <span>Unduh PNG</span>
-                </button>
+
+            <!-- ── GRID 4 OPERASI ─────────────────────────────────────── -->
+            <div class="arith-ops-grid">
+
+              <!-- PENJUMLAHAN -->
+              <div class="arith-op-card">
+                <div class="arith-op-header">
+                  <span class="arith-op-icon">➕</span>
+                  <div>
+                    <div class="arith-op-title">Penjumlahan</div>
+                    <div class="arith-op-formula">out = clamp(P + k, 0, 255)</div>
+                  </div>
+                </div>
+                <div class="canvas-item">
+                  <div class="canvas-label"><span class="dot" style="background:#f59e0b;"></span>Hasil Penjumlahan (+
+                    <span class="lbl-k">30</span>)</div>
+                  <canvas id="canvas-add"></canvas>
+                  <div class="download-bar">
+                    <button class="download-btn" onclick="downloadCanvas('canvas-add','arith-penjumlahan')"
+                      id="btn-dl-add">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      <span>Unduh PNG</span>
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
+
+              <!-- PENGURANGAN -->
+              <div class="arith-op-card">
+                <div class="arith-op-header">
+                  <span class="arith-op-icon">➖</span>
+                  <div>
+                    <div class="arith-op-title">Pengurangan</div>
+                    <div class="arith-op-formula">out = clamp(P − k, 0, 255)</div>
+                  </div>
+                </div>
+                <div class="canvas-item">
+                  <div class="canvas-label"><span class="dot" style="background:#ef4444;"></span>Hasil Pengurangan (−
+                    <span class="lbl-k">30</span>)</div>
+                  <canvas id="canvas-sub"></canvas>
+                  <div class="download-bar">
+                    <button class="download-btn" onclick="downloadCanvas('canvas-sub','arith-pengurangan')"
+                      id="btn-dl-sub">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      <span>Unduh PNG</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PERKALIAN -->
+              <div class="arith-op-card">
+                <div class="arith-op-header">
+                  <span class="arith-op-icon">✖️</span>
+                  <div>
+                    <div class="arith-op-title">Perkalian</div>
+                    <div class="arith-op-formula">out = clamp(P × (k/10), 0, 255)</div>
+                  </div>
+                </div>
+                <div class="canvas-item">
+                  <div class="canvas-label"><span class="dot" style="background:#10b981;"></span>Hasil Perkalian (×
+                    <span class="lbl-kmul">3.0</span>)</div>
+                  <canvas id="canvas-mul"></canvas>
+                  <div class="download-bar">
+                    <button class="download-btn" onclick="downloadCanvas('canvas-mul','arith-perkalian')"
+                      id="btn-dl-mul">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      <span>Unduh PNG</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PEMBAGIAN -->
+              <div class="arith-op-card">
+                <div class="arith-op-header">
+                  <span class="arith-op-icon">➗</span>
+                  <div>
+                    <div class="arith-op-title">Pembagian</div>
+                    <div class="arith-op-formula">out = clamp(P ÷ (k/10), 0, 255)</div>
+                  </div>
+                </div>
+                <div class="canvas-item">
+                  <div class="canvas-label"><span class="dot" style="background:#6366f1;"></span>Hasil Pembagian (÷
+                    <span class="lbl-kdiv">3.0</span>)</div>
+                  <canvas id="canvas-div"></canvas>
+                  <div class="download-bar">
+                    <button class="download-btn" onclick="downloadCanvas('canvas-div','arith-pembagian')"
+                      id="btn-dl-div">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      <span>Unduh PNG</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </div><!-- /arith-ops-grid -->
+
           </div>
         </div>
       </section>
+
 
       <section class="section" id="sec-logic">
         <div class="section-card">
@@ -304,8 +524,14 @@
                 <div class="canvas-label"><span class="dot"></span>Bitwise AND (Interaktif)</div>
                 <canvas id="canvas-bitand"></canvas>
                 <div class="download-bar">
-                  <button class="download-btn" onclick="downloadCanvas('canvas-bitand', 'bitwise-and')" id="btn-dl-bitand">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <button class="download-btn" onclick="downloadCanvas('canvas-bitand', 'bitwise-and')"
+                    id="btn-dl-bitand">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
                     <span>Unduh PNG</span>
                   </button>
                 </div>
@@ -315,7 +541,12 @@
                 <canvas id="canvas-not"></canvas>
                 <div class="download-bar">
                   <button class="download-btn" onclick="downloadCanvas('canvas-not', 'negative-not')" id="btn-dl-not">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
                     <span>Unduh PNG</span>
                   </button>
                 </div>
@@ -367,8 +598,14 @@
                 <canvas id="canvas-normalize"></canvas>
                 <div class="download-bar">
                   <span class="dl-label">Unduh hasil ekualisasi</span>
-                  <button class="download-btn" onclick="downloadCanvas('canvas-normalize', 'histogram-equalized')" id="btn-dl-normalize">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <button class="download-btn" onclick="downloadCanvas('canvas-normalize', 'histogram-equalized')"
+                    id="btn-dl-normalize">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
                     <span>Unduh PNG</span>
                   </button>
                 </div>
@@ -434,8 +671,14 @@
                   </div>
                   <canvas id="canvas-norm-after"></canvas>
                   <div class="download-bar">
-                    <button class="download-btn" onclick="downloadCanvas('canvas-norm-after', 'image-normalized')" id="btn-dl-norm">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <button class="download-btn" onclick="downloadCanvas('canvas-norm-after', 'image-normalized')"
+                      id="btn-dl-norm">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
                       <span>Unduh PNG</span>
                     </button>
                   </div>
@@ -583,7 +826,12 @@
 
         <div class="download-all-actions">
           <button class="download-all-btn" id="btn-download-all" onclick="downloadAllImages()" disabled>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
             <span id="dl-all-btn-text">Upload gambar terlebih dahulu</span>
           </button>
         </div>
@@ -607,7 +855,10 @@
 
   <!-- Toast notification for downloads -->
   <div id="dl-toast">
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
     <span id="dl-toast-msg">Gambar berhasil diunduh!</span>
   </div>
 
