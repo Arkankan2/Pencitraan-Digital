@@ -2,20 +2,20 @@
 /* ================================================================
    GLOBAL STATE
 ================================================================ */
-let imgData  = null;   // original proportional ImageData
+let imgData = null;   // original proportional ImageData
 let grayData = null;   // grayscale ImageData
 let normData = null;   // TAMBAHAN: normalized (equalized) ImageData
-let imgW     = 0;
-let imgH     = 0;
+let imgW = 0;
+let imgH = 0;
 
-let chartRGB  = null;
+let chartRGB = null;
 let chartGray = null;
-let chartHSV  = null;
+let chartHSV = null;
 let chartNorm = null;  // TAMBAHAN: instance chart histogram normalisasi
 
 // Normalisasi gambar (Min-Max)
 let chartNormBefore = null;  // chart histogram sebelum normalisasi
-let chartNormAfter  = null;  // chart histogram sesudah normalisasi
+let chartNormAfter = null;  // chart histogram sesudah normalisasi
 let currentNormMode = 'gray'; // 'gray' atau 'rgb'
 
 /* ================================================================
@@ -50,7 +50,7 @@ document.querySelectorAll('input[type="range"]').forEach(r => {
 /* ================================================================
    FILE UPLOAD HANDLING
 ================================================================ */
-const fileInput  = document.getElementById('file-input');
+const fileInput = document.getElementById('file-input');
 const uploadZone = document.getElementById('upload-zone');
 
 uploadZone.addEventListener('dragover', e => {
@@ -85,25 +85,25 @@ function processFile(file) {
     // Hitung dimensi proporsional (lebar 300px)
     const origW = img.naturalWidth;
     const origH = img.naturalHeight;
-    const newW  = 300;
-    const newH  = Math.round(origH * (newW / origW));
+    const newW = 300;
+    const newH = Math.round(origH * (newW / origW));
     imgW = newW;
     imgH = newH;
 
     // Gambar ke offscreen canvas untuk ambil ImageData
     const offscreen = document.createElement('canvas');
-    offscreen.width  = newW;
+    offscreen.width = newW;
     offscreen.height = newH;
     const ctx = offscreen.getContext('2d');
     ctx.drawImage(img, 0, 0, newW, newH);
     imgData = ctx.getImageData(0, 0, newW, newH);
 
     // Tampilkan info file
-    document.getElementById('info-name').textContent        = file.name;
-    document.getElementById('info-size').textContent        = formatBytes(file.size);
-    document.getElementById('info-res').textContent         = `${origW} × ${origH} px`;
+    document.getElementById('info-name').textContent = file.name;
+    document.getElementById('info-size').textContent = formatBytes(file.size);
+    document.getElementById('info-res').textContent = `${origW} × ${origH} px`;
     document.getElementById('info-display-res').textContent = `${newW} × ${newH} px`;
-    document.getElementById('info-type').textContent        = file.type;
+    document.getElementById('info-type').textContent = file.type;
     document.getElementById('original-display').classList.remove('hidden');
     document.getElementById('file-info').classList.remove('hidden');
 
@@ -112,7 +112,7 @@ function processFile(file) {
 
     // Jalankan semua proses pengolahan citra
     computeGrayscale();
-    
+
     // TAMBAHAN: Eksekusi normalisasi histogram tepat setelah grayscale siap
     computeNormalization();
 
@@ -126,7 +126,7 @@ function processFile(file) {
 
 /** Format ukuran file ke satuan yang terbaca manusia */
 function formatBytes(b) {
-  if (b < 1024)    return b + ' B';
+  if (b < 1024) return b + ' B';
   if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
   return (b / 1048576).toFixed(2) + ' MB';
 }
@@ -141,7 +141,9 @@ function showAllSections() {
   });
 
   renderBinary();
+  renderBinaryOtsu();   // ← OTSU
   renderBrightness();
+  renderArithOps();     // ← 4 operasi konstanta
   renderBitand();
   renderNot();
   buildHistograms();
@@ -157,9 +159,9 @@ function showAllSections() {
    HELPER: Render ImageData ke elemen canvas berdasarkan ID
 ================================================================ */
 function renderImageDataToCanvas(canvasId, data, w, h) {
-  const canvas  = document.getElementById(canvasId);
+  const canvas = document.getElementById(canvasId);
   if (canvas) {
-    canvas.width  = w;
+    canvas.width = w;
     canvas.height = h;
     canvas.getContext('2d').putImageData(data, 0, 0);
   }
@@ -172,7 +174,7 @@ function renderImageDataToCanvas(canvasId, data, w, h) {
 function computeGrayscale() {
   const src = imgData.data;
   const out = new ImageData(imgW, imgH);
-  const d   = out.data;
+  const d = out.data;
 
   for (let i = 0; i < src.length; i += 4) {
     const g = Math.round(0.299 * src[i] + 0.587 * src[i + 1] + 0.114 * src[i + 2]);
@@ -189,10 +191,10 @@ function computeGrayscale() {
 ================================================================ */
 function computeNormalization() {
   if (!grayData) return;
-  
+
   const src = grayData.data;
   const out = new ImageData(imgW, imgH);
-  const d   = out.data;
+  const d = out.data;
   const totalPixels = imgW * imgH;
 
   // Langkah 1: Hitung histogram frekuensi keabuan
@@ -285,20 +287,20 @@ function buildImageNormalization() {
     // Buat ImageData before (grayscale asli)
     beforeData = new ImageData(imgW, imgH);
     for (let i = 0; i < gs.length; i += 4) {
-      beforeData.data[i] = beforeData.data[i+1] = beforeData.data[i+2] = gs[i];
-      beforeData.data[i+3] = 255;
+      beforeData.data[i] = beforeData.data[i + 1] = beforeData.data[i + 2] = gs[i];
+      beforeData.data[i + 3] = 255;
     }
 
     // Buat ImageData after (normalisasi min-max)
     afterData = new ImageData(imgW, imgH);
     for (let i = 0; i < gs.length; i += 4) {
       const normalized = range === 0 ? 0 : Math.round(((gs[i] - gMin) / range) * 255);
-      afterData.data[i] = afterData.data[i+1] = afterData.data[i+2] = normalized;
-      afterData.data[i+3] = 255;
+      afterData.data[i] = afterData.data[i + 1] = afterData.data[i + 2] = normalized;
+      afterData.data[i + 3] = 255;
     }
 
     beforeValues = vals;
-    afterValues  = [];
+    afterValues = [];
     const ad = afterData.data;
     for (let i = 0; i < ad.length; i += 4) afterValues.push(ad[i]);
 
@@ -308,8 +310,8 @@ function buildImageNormalization() {
     const rVals = [], gVals = [], bVals = [];
     for (let i = 0; i < src.length; i += 4) {
       rVals.push(src[i]);
-      gVals.push(src[i+1]);
-      bVals.push(src[i+2]);
+      gVals.push(src[i + 1]);
+      bVals.push(src[i + 2]);
     }
 
     const rMin = Math.min(...rVals), rMax = Math.max(...rVals), rRange = rMax - rMin;
@@ -323,27 +325,27 @@ function buildImageNormalization() {
     // After = normalisasi per channel
     afterData = new ImageData(imgW, imgH);
     for (let i = 0; i < src.length; i += 4) {
-      afterData.data[i]   = rRange === 0 ? 0 : Math.round(((src[i]   - rMin) / rRange) * 255);
-      afterData.data[i+1] = gRange === 0 ? 0 : Math.round(((src[i+1] - gMin) / gRange) * 255);
-      afterData.data[i+2] = bRange === 0 ? 0 : Math.round(((src[i+2] - bMin) / bRange) * 255);
-      afterData.data[i+3] = 255;
+      afterData.data[i] = rRange === 0 ? 0 : Math.round(((src[i] - rMin) / rRange) * 255);
+      afterData.data[i + 1] = gRange === 0 ? 0 : Math.round(((src[i + 1] - gMin) / gRange) * 255);
+      afterData.data[i + 2] = bRange === 0 ? 0 : Math.round(((src[i + 2] - bMin) / bRange) * 255);
+      afterData.data[i + 3] = 255;
     }
 
     // Hitung brightness (luminance) untuk statistik
     beforeValues = [];
-    afterValues  = [];
+    afterValues = [];
     for (let i = 0; i < src.length; i += 4) {
-      beforeValues.push(Math.round(0.299 * src[i] + 0.587 * src[i+1] + 0.114 * src[i+2]));
+      beforeValues.push(Math.round(0.299 * src[i] + 0.587 * src[i + 1] + 0.114 * src[i + 2]));
     }
     const ad = afterData.data;
     for (let i = 0; i < ad.length; i += 4) {
-      afterValues.push(Math.round(0.299 * ad[i] + 0.587 * ad[i+1] + 0.114 * ad[i+2]));
+      afterValues.push(Math.round(0.299 * ad[i] + 0.587 * ad[i + 1] + 0.114 * ad[i + 2]));
     }
   }
 
   // Render gambar ke canvas
   renderImageDataToCanvas('canvas-norm-before', beforeData, imgW, imgH);
-  renderImageDataToCanvas('canvas-norm-after',  afterData,  imgW, imgH);
+  renderImageDataToCanvas('canvas-norm-after', afterData, imgW, imgH);
 
   // Hitung dan tampilkan statistik
   displayNormStats(beforeValues, afterValues);
@@ -355,28 +357,28 @@ function buildImageNormalization() {
 /** Hitung statistik array nilai piksel dan tampilkan ke tabel */
 function displayNormStats(beforeVals, afterVals) {
   const calc = (vals) => {
-    const n    = vals.length;
-    const mn   = Math.min(...vals);
-    const mx   = Math.max(...vals);
+    const n = vals.length;
+    const mn = Math.min(...vals);
+    const mx = Math.max(...vals);
     const mean = vals.reduce((a, b) => a + b, 0) / n;
     const variance = vals.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
-    const std  = Math.sqrt(variance);
+    const std = Math.sqrt(variance);
     return { min: mn, max: mx, mean: mean.toFixed(2), std: std.toFixed(2), range: mx - mn };
   };
 
   const b = calc(beforeVals);
   const a = calc(afterVals);
 
-  document.getElementById('stat-before-min').textContent   = b.min;
-  document.getElementById('stat-before-max').textContent   = b.max;
-  document.getElementById('stat-before-mean').textContent  = b.mean;
-  document.getElementById('stat-before-std').textContent   = b.std;
+  document.getElementById('stat-before-min').textContent = b.min;
+  document.getElementById('stat-before-max').textContent = b.max;
+  document.getElementById('stat-before-mean').textContent = b.mean;
+  document.getElementById('stat-before-std').textContent = b.std;
   document.getElementById('stat-before-range').textContent = b.range;
 
-  document.getElementById('stat-after-min').textContent   = a.min;
-  document.getElementById('stat-after-max').textContent   = a.max;
-  document.getElementById('stat-after-mean').textContent  = a.mean;
-  document.getElementById('stat-after-std').textContent   = a.std;
+  document.getElementById('stat-after-min').textContent = a.min;
+  document.getElementById('stat-after-max').textContent = a.max;
+  document.getElementById('stat-after-mean').textContent = a.mean;
+  document.getElementById('stat-after-std').textContent = a.std;
   document.getElementById('stat-after-range').textContent = a.range;
 }
 
@@ -388,9 +390,9 @@ function buildNormHistograms(beforeVals, afterVals) {
     return h;
   };
 
-  const labels    = Array.from({ length: 256 }, (_, i) => i);
+  const labels = Array.from({ length: 256 }, (_, i) => i);
   const histBefore = makeHist(beforeVals);
-  const histAfter  = makeHist(afterVals);
+  const histAfter = makeHist(afterVals);
 
   const baseCfg = (data, color, bgColor) => ({
     type: 'bar',
@@ -428,7 +430,7 @@ function buildNormHistograms(beforeVals, afterVals) {
   });
 
   if (chartNormBefore) chartNormBefore.destroy();
-  if (chartNormAfter)  chartNormAfter.destroy();
+  if (chartNormAfter) chartNormAfter.destroy();
 
   chartNormBefore = new Chart(
     document.getElementById('chart-norm-before'),
@@ -449,14 +451,14 @@ if (sliderThreshold) sliderThreshold.addEventListener('input', renderBinary);
 function renderBinary() {
   if (!grayData) return;
 
-  const t   = +sliderThreshold.value;
+  const t = +sliderThreshold.value;
   document.getElementById('val-threshold').textContent = t;
   document.getElementById('lbl-threshold').textContent = t;
   syncSliderGradient(sliderThreshold);
 
   const src = grayData.data;
   const out = new ImageData(imgW, imgH);
-  const d   = out.data;
+  const d = out.data;
 
   for (let i = 0; i < src.length; i += 4) {
     const v = src[i] > t ? 255 : 0;
@@ -468,7 +470,91 @@ function renderBinary() {
 }
 
 /* ================================================================
-   POIN 3.3 — OPERASI ARITMATIKA (BRIGHTNESS)
+   OTSU THRESHOLDING
+   Mencari threshold optimal dengan memaksimalkan varian antar-kelas
+   (between-class variance): σ²_B = w_B · w_F · (μ_B − μ_F)²
+================================================================ */
+
+/**
+ * Menghitung threshold optimal metode Otsu.
+ * @returns {{ threshold: number, maxVariance: number }}
+ */
+function computeOtsuThreshold() {
+  if (!grayData) return { threshold: 127, maxVariance: 0 };
+
+  const src = grayData.data;
+  const totalPixels = imgW * imgH;
+
+  // Langkah 1: Histogram grayscale
+  const hist = new Array(256).fill(0);
+  for (let i = 0; i < src.length; i += 4) hist[src[i]]++;
+
+  // Langkah 2: Jumlah total intensitas semua piksel
+  let totalSum = 0;
+  for (let i = 0; i < 256; i++) totalSum += i * hist[i];
+
+  let sumBg = 0;   // akumulasi intensitas kelas background
+  let wBg = 0;   // bobot (jumlah piksel) kelas background
+  let maxVar = 0;
+  let bestT = 0;
+
+  // Langkah 3: Iterasi tiap calon threshold t = 0..255
+  for (let t = 0; t < 256; t++) {
+    wBg += hist[t];
+    if (wBg === 0) continue;
+
+    const wFg = totalPixels - wBg;
+    if (wFg === 0) break;
+
+    sumBg += t * hist[t];
+
+    const meanBg = sumBg / wBg;
+    const meanFg = (totalSum - sumBg) / wFg;
+    const diff = meanBg - meanFg;
+
+    // σ²_B = w_B · w_F · (μ_B − μ_F)²
+    const varBetween = wBg * wFg * diff * diff;
+
+    if (varBetween > maxVar) {
+      maxVar = varBetween;
+      bestT = t;
+    }
+  }
+
+  return { threshold: bestT, maxVariance: maxVar };
+}
+
+/**
+ * Render citra biner menggunakan threshold Otsu (otomatis).
+ */
+function renderBinaryOtsu() {
+  if (!grayData) return;
+
+  const { threshold, maxVariance } = computeOtsuThreshold();
+
+  // Update UI info
+  const elT = document.getElementById('otsu-threshold-display');
+  const elVar = document.getElementById('otsu-variance-display');
+  const elLbl = document.getElementById('lbl-otsu-threshold');
+  if (elT) elT.textContent = threshold;
+  if (elVar) elVar.textContent = maxVariance.toFixed(2);
+  if (elLbl) elLbl.textContent = threshold;
+
+  const src = grayData.data;
+  const out = new ImageData(imgW, imgH);
+  const d = out.data;
+
+  for (let i = 0; i < src.length; i += 4) {
+    const v = src[i] > threshold ? 255 : 0;
+    d[i] = d[i + 1] = d[i + 2] = v;
+    d[i + 3] = 255;
+  }
+
+  renderImageDataToCanvas('canvas-binary-otsu', out, imgW, imgH);
+}
+
+/* ================================================================
+   POIN 3.3 — OPERASI ARITMATIKA (BRIGHTNESS + KONSTANTA)
 ================================================================ */
 const sliderBrightness = document.getElementById('slider-brightness');
 if (sliderBrightness) sliderBrightness.addEventListener('input', renderBrightness);
@@ -477,15 +563,18 @@ function renderBrightness() {
   if (!imgData) return;
 
   const beta = +sliderBrightness.value;
-  document.getElementById('val-brightness').textContent = (beta >= 0 ? '+' : '') + beta;
+  const sign = beta >= 0 ? '+' : '';
+  document.getElementById('val-brightness').textContent = sign + beta;
+  const lblB = document.getElementById('lbl-brightness');
+  if (lblB) lblB.textContent = sign + beta;
   syncSliderGradient(sliderBrightness);
 
   const src = imgData.data;
   const out = new ImageData(imgW, imgH);
-  const d   = out.data;
+  const d = out.data;
 
   for (let i = 0; i < src.length; i += 4) {
-    d[i]     = clamp(src[i]     + beta);
+    d[i] = clamp(src[i] + beta);
     d[i + 1] = clamp(src[i + 1] + beta);
     d[i + 2] = clamp(src[i + 2] + beta);
     d[i + 3] = 255;
@@ -493,6 +582,59 @@ function renderBrightness() {
 
   renderImageDataToCanvas('canvas-arith', out, imgW, imgH);
 }
+
+/* ── Slider Konstanta (k) — shared untuk 4 operasi ── */
+const sliderConst = document.getElementById('slider-const');
+if (sliderConst) sliderConst.addEventListener('input', () => {
+  syncSliderGradient(sliderConst);
+  renderArithOps();
+});
+
+/**
+ * Render semua 4 operasi konstanta sekaligus.
+ * Perkalian & pembagian memakai faktor k/10 agar skala lebih halus
+ * (k=10 → ×1.0, k=30 → ×3.0, k=50 → ×5.0, dst.)
+ */
+function renderArithOps() {
+  if (!imgData) return;
+
+  const k = +sliderConst.value;
+  document.getElementById('val-const').textContent = k;
+
+  // update semua label di kanvas
+  document.querySelectorAll('.lbl-k').forEach(el => el.textContent = k);
+
+  const factor = (k / 10).toFixed(1);
+  document.querySelectorAll('.lbl-kmul').forEach(el => el.textContent = factor);
+  document.querySelectorAll('.lbl-kdiv').forEach(el => el.textContent = factor);
+
+  const src = imgData.data;
+  const fk = k / 10;   // faktor floating-point untuk kali & bagi
+
+  // Buffer re-usable
+  const addOut = new ImageData(imgW, imgH);
+  const subOut = new ImageData(imgW, imgH);
+  const mulOut = new ImageData(imgW, imgH);
+  const divOut = new ImageData(imgW, imgH);
+  const a = addOut.data, s = subOut.data, m = mulOut.data, dv = divOut.data;
+
+  for (let i = 0; i < src.length; i += 4) {
+    for (let c = 0; c < 3; c++) {
+      const p = src[i + c];
+      a[i + c] = clamp(p + k);
+      s[i + c] = clamp(p - k);
+      m[i + c] = clamp(Math.round(p * fk));
+      dv[i + c] = clamp(Math.round(p / fk));
+    }
+    a[i + 3] = s[i + 3] = m[i + 3] = dv[i + 3] = 255;
+  }
+
+  renderImageDataToCanvas('canvas-add', addOut, imgW, imgH);
+  renderImageDataToCanvas('canvas-sub', subOut, imgW, imgH);
+  renderImageDataToCanvas('canvas-mul', mulOut, imgW, imgH);
+  renderImageDataToCanvas('canvas-div', divOut, imgW, imgH);
+}
+
 
 /* ================================================================
    POIN 3.4 — OPERASI LOGIKA
@@ -509,10 +651,10 @@ function renderBitand() {
 
   const src = imgData.data;
   const out = new ImageData(imgW, imgH);
-  const d   = out.data;
+  const d = out.data;
 
   for (let i = 0; i < src.length; i += 4) {
-    d[i]     = src[i]     & mask;
+    d[i] = src[i] & mask;
     d[i + 1] = src[i + 1] & mask;
     d[i + 2] = src[i + 2] & mask;
     d[i + 3] = 255;
@@ -526,10 +668,10 @@ function renderNot() {
 
   const src = imgData.data;
   const out = new ImageData(imgW, imgH);
-  const d   = out.data;
+  const d = out.data;
 
   for (let i = 0; i < src.length; i += 4) {
-    d[i]     = 255 - src[i];
+    d[i] = 255 - src[i];
     d[i + 1] = 255 - src[i + 1];
     d[i + 2] = 255 - src[i + 2];
     d[i + 3] = 255;
@@ -601,15 +743,15 @@ function buildHistograms() {
   });
 
   // Hancurkan chart lama sebelum buat baru (mencegah memory leak)
-  if (chartRGB)  chartRGB.destroy();
+  if (chartRGB) chartRGB.destroy();
   if (chartGray) chartGray.destroy();
-  if (chartHSV)  chartHSV.destroy();
+  if (chartHSV) chartHSV.destroy();
   if (chartNorm) chartNorm.destroy(); // TAMBAHAN
 
   chartRGB = new Chart(document.getElementById('chart-rgb'), chartCfg([
-    { label: 'Red',   data: rHist, borderColor: '#f87171', borderWidth: 1.5, fill: false },
+    { label: 'Red', data: rHist, borderColor: '#f87171', borderWidth: 1.5, fill: false },
     { label: 'Green', data: gHist, borderColor: '#4ade80', borderWidth: 1.5, fill: false },
-    { label: 'Blue',  data: bHist, borderColor: '#60a5fa', borderWidth: 1.5, fill: false },
+    { label: 'Blue', data: bHist, borderColor: '#60a5fa', borderWidth: 1.5, fill: false },
   ]));
 
   chartGray = new Chart(document.getElementById('chart-gray'), chartCfg([
@@ -655,18 +797,18 @@ const KERNELS = [
     name: 'Mean (Blur)',
     emoji: '💧',
     kernel: [
-      [1/9, 1/9, 1/9],
-      [1/9, 1/9, 1/9],
-      [1/9, 1/9, 1/9]
+      [1 / 9, 1 / 9, 1 / 9],
+      [1 / 9, 1 / 9, 1 / 9],
+      [1 / 9, 1 / 9, 1 / 9]
     ]
   },
   {
     name: 'Sharpening Standar',
     emoji: '🔪',
     kernel: [
-      [ 0, -1,  0],
-      [-1,  5, -1],
-      [ 0, -1,  0]
+      [0, -1, 0],
+      [-1, 5, -1],
+      [0, -1, 0]
     ]
   },
   {
@@ -674,7 +816,7 @@ const KERNELS = [
     emoji: '⚡',
     kernel: [
       [-1, -1, -1],
-      [-1,  9, -1],
+      [-1, 9, -1],
       [-1, -1, -1]
     ]
   },
@@ -692,8 +834,8 @@ const KERNELS = [
     emoji: '↔️',
     kernel: [
       [-1, -2, -1],
-      [ 0,  0,  0],
-      [ 1,  2,  1]
+      [0, 0, 0],
+      [1, 2, 1]
     ]
   }
 ];
@@ -705,9 +847,9 @@ function buildConvolutions() {
   grid.innerHTML = '';
 
   KERNELS.forEach((kDef, idx) => {
-    const result   = applyConvolution(imgData, kDef.kernel, imgW, imgH);
+    const result = applyConvolution(imgData, kDef.kernel, imgW, imgH);
     const canvasId = `canvas-conv-${idx}`;
-    const dlName   = `konvolusi-${kDef.name.toLowerCase().replace(/\s+/g, '-')}`;
+    const dlName = `konvolusi-${kDef.name.toLowerCase().replace(/\s+/g, '-')}`;
 
     const item = document.createElement('div');
     item.className = 'conv-item';
@@ -727,9 +869,9 @@ function buildConvolutions() {
     grid.appendChild(item);
 
     requestAnimationFrame(() => {
-      const canvas  = document.getElementById(canvasId);
+      const canvas = document.getElementById(canvasId);
       if (canvas) {
-        canvas.width  = imgW;
+        canvas.width = imgW;
         canvas.height = imgH;
         canvas.getContext('2d').putImageData(result, 0, 0);
       }
@@ -755,9 +897,9 @@ function buildKernelHTML(k) {
 function applyConvolution(imageData, kernel, w, h) {
   const src = imageData.data;
   const out = new ImageData(w, h);
-  const d   = out.data;
-  const kH  = kernel.length;
-  const kW  = kernel[0].length;
+  const d = out.data;
+  const kH = kernel.length;
+  const kW = kernel[0].length;
   const kHH = Math.floor(kH / 2);
   const kHW = Math.floor(kW / 2);
 
@@ -767,18 +909,18 @@ function applyConvolution(imageData, kernel, w, h) {
 
       for (let ky = 0; ky < kH; ky++) {
         for (let kx = 0; kx < kW; kx++) {
-          const sy  = clampCoord(y + ky - kHH, h);
-          const sx  = clampCoord(x + kx - kHW, w);
+          const sy = clampCoord(y + ky - kHH, h);
+          const sx = clampCoord(x + kx - kHW, w);
           const idx = (sy * w + sx) * 4;
-          const kv  = kernel[ky][kx];
-          rSum += src[idx]     * kv;
+          const kv = kernel[ky][kx];
+          rSum += src[idx] * kv;
           gSum += src[idx + 1] * kv;
           bSum += src[idx + 2] * kv;
         }
       }
 
-      const idx  = (y * w + x) * 4;
-      d[idx]     = clamp(Math.round(rSum));
+      const idx = (y * w + x) * 4;
+      d[idx] = clamp(Math.round(rSum));
       d[idx + 1] = clamp(Math.round(gSum));
       d[idx + 2] = clamp(Math.round(bSum));
       d[idx + 3] = 255;
@@ -795,37 +937,37 @@ const MORPH_KERNELS = [
   {
     name: 'Kernel Kotak (3×3)',
     emoji: '⬜',
-    k: [[1,1,1],[1,1,1],[1,1,1]]
+    k: [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
   },
   {
     name: 'Kernel Plus (+)',
     emoji: '➕',
-    k: [[0,1,0],[1,1,1],[0,1,0]]
+    k: [[0, 1, 0], [1, 1, 1], [0, 1, 0]]
   },
   {
     name: 'Kernel Cross (×)',
     emoji: '✖️',
-    k: [[1,0,1],[0,1,0],[1,0,1]]
+    k: [[1, 0, 1], [0, 1, 0], [1, 0, 1]]
   },
   {
     name: 'Kernel Horizontal (—)',
     emoji: '↔️',
-    k: [[0,0,0],[1,1,1],[0,0,0]]
+    k: [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
   },
   {
     name: 'Kernel Vertikal (|)',
     emoji: '↕️',
-    k: [[0,1,0],[0,1,0],[0,1,0]]
+    k: [[0, 1, 0], [0, 1, 0], [0, 1, 0]]
   },
   {
     name: 'Kernel Diagonal Kanan (\\)',
     emoji: '↗️',
-    k: [[0,0,1],[0,1,0],[1,0,0]]
+    k: [[0, 0, 1], [0, 1, 0], [1, 0, 0]]
   },
   {
     name: 'Kernel Diagonal Kiri (/)',
     emoji: '↖️',
-    k: [[1,0,0],[0,1,0],[0,0,1]]
+    k: [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
   }
 ];
 
@@ -836,11 +978,11 @@ function buildMorphology() {
   container.innerHTML = '';
 
   MORPH_KERNELS.forEach((kDef, idx) => {
-    const eroded     = applyMorphology(imgData, kDef.k, imgW, imgH, 'erode');
-    const dilated    = applyMorphology(imgData, kDef.k, imgW, imgH, 'dilate');
-    const erosionId  = `canvas-erode-${idx}`;
+    const eroded = applyMorphology(imgData, kDef.k, imgW, imgH, 'erode');
+    const dilated = applyMorphology(imgData, kDef.k, imgW, imgH, 'dilate');
+    const erosionId = `canvas-erode-${idx}`;
     const dilationId = `canvas-dilate-${idx}`;
-    const dlErodeName  = `morfologi-erosi-${kDef.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+    const dlErodeName = `morfologi-erosi-${kDef.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
     const dlDilateName = `morfologi-dilasi-${kDef.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 
     const sec = document.createElement('div');
@@ -878,9 +1020,9 @@ function buildMorphology() {
 
     requestAnimationFrame(() => {
       [[erosionId, eroded], [dilationId, dilated]].forEach(([id, data]) => {
-        const c  = document.getElementById(id);
+        const c = document.getElementById(id);
         if (c) {
-          c.width  = imgW;
+          c.width = imgW;
           c.height = imgH;
           c.getContext('2d').putImageData(data, 0, 0);
         }
@@ -892,9 +1034,9 @@ function buildMorphology() {
 function applyMorphology(imageData, kernel, w, h, op) {
   const src = imageData.data;
   const out = new ImageData(w, h);
-  const d   = out.data;
-  const kH  = kernel.length;
-  const kW  = kernel[0].length;
+  const d = out.data;
+  const kH = kernel.length;
+  const kW = kernel[0].length;
   const kHH = Math.floor(kH / 2);
   const kHW = Math.floor(kW / 2);
 
@@ -907,8 +1049,8 @@ function applyMorphology(imageData, kernel, w, h, op) {
       for (let ky = 0; ky < kH; ky++) {
         for (let kx = 0; kx < kW; kx++) {
           if (!kernel[ky][kx]) continue;
-          const sy  = clampCoord(y + ky - kHH, h);
-          const sx  = clampCoord(x + kx - kHW, w);
+          const sy = clampCoord(y + ky - kHH, h);
+          const sx = clampCoord(x + kx - kHW, w);
           const idx = (sy * w + sx) * 4;
 
           if (op === 'erode') {
@@ -923,8 +1065,8 @@ function applyMorphology(imageData, kernel, w, h, op) {
         }
       }
 
-      const idx  = (y * w + x) * 4;
-      d[idx]     = rAcc;
+      const idx = (y * w + x) * 4;
+      d[idx] = rAcc;
       d[idx + 1] = gAcc;
       d[idx + 2] = bAcc;
       d[idx + 3] = 255;
@@ -940,7 +1082,7 @@ function applyMorphology(imageData, kernel, w, h, op) {
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const parent = btn.closest('.section-card');
-    parent.querySelectorAll('.tab-btn').forEach(b  => b.classList.remove('active'));
+    parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     parent.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(btn.dataset.tab).classList.add('active');
@@ -992,16 +1134,16 @@ function rgbToHSV(r, g, b) {
   r /= 255; g /= 255; b /= 255;
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
-  const d   = max - min;
+  const d = max - min;
 
   let h = 0;
   const s = max === 0 ? 0 : d / max;
   const v = max;
 
   if (d !== 0) {
-    if      (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
     else if (max === g) h = ((b - r) / d + 2) / 6;
-    else                h = ((r - g) / d + 4) / 6;
+    else h = ((r - g) / d + 4) / 6;
   }
 
   return { h, s, v };
@@ -1019,14 +1161,19 @@ function rgbToHSV(r, g, b) {
 function getAllCanvasEntries() {
   // Canvas statis yang selalu ada setelah upload
   const STATIC = [
-    { id: 'canvas-original',   name: '01-original' },
-    { id: 'canvas-gray',       name: '02-grayscale' },
-    { id: 'canvas-binary',     name: '03-binary-threshold' },
-    { id: 'canvas-arith',      name: '04-brightness-adjusted' },
-    { id: 'canvas-bitand',     name: '05-bitwise-and' },
-    { id: 'canvas-not',        name: '06-negative-not' },
-    { id: 'canvas-normalize',  name: '07-histogram-equalized' },
-    { id: 'canvas-norm-before',name: '08-normalization-before' },
+    { id: 'canvas-original', name: '01-original' },
+    { id: 'canvas-gray', name: '02-grayscale' },
+    { id: 'canvas-binary', name: '03-binary-manual' },
+    { id: 'canvas-binary-otsu', name: '03-binary-otsu' },
+    { id: 'canvas-arith', name: '04-brightness-adjusted' },
+    { id: 'canvas-add', name: '04-aritmatika-penjumlahan' },
+    { id: 'canvas-sub', name: '04-aritmatika-pengurangan' },
+    { id: 'canvas-mul', name: '04-aritmatika-perkalian' },
+    { id: 'canvas-div', name: '04-aritmatika-pembagian' },
+    { id: 'canvas-bitand', name: '05-bitwise-and' },
+    { id: 'canvas-not', name: '06-negative-not' },
+    { id: 'canvas-normalize', name: '07-histogram-equalized' },
+    { id: 'canvas-norm-before', name: '08-normalization-before' },
     { id: 'canvas-norm-after', name: '09-normalization-after' },
   ];
 
@@ -1044,19 +1191,19 @@ function getAllCanvasEntries() {
     const el = document.getElementById(id);
     if (el && el.width > 0) {
       const slug = k.name.toLowerCase().replace(/\s+/g, '-');
-      entries.push({ id, name: `10-konvolusi-${idx+1}-${slug}` });
+      entries.push({ id, name: `10-konvolusi-${idx + 1}-${slug}` });
     }
   });
 
   // Morfologi dinamis (canvas-erode-x, canvas-dilate-x)
   MORPH_KERNELS.forEach((k, idx) => {
-    const erodeId  = `canvas-erode-${idx}`;
+    const erodeId = `canvas-erode-${idx}`;
     const dilateId = `canvas-dilate-${idx}`;
     const slug = k.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const eEl = document.getElementById(erodeId);
     const dEl = document.getElementById(dilateId);
-    if (eEl && eEl.width > 0)  entries.push({ id: erodeId,  name: `11-erosi-${idx+1}-${slug}` });
-    if (dEl && dEl.width > 0)  entries.push({ id: dilateId, name: `11-dilasi-${idx+1}-${slug}` });
+    if (eEl && eEl.width > 0) entries.push({ id: erodeId, name: `11-erosi-${idx + 1}-${slug}` });
+    if (dEl && dEl.width > 0) entries.push({ id: dilateId, name: `11-dilasi-${idx + 1}-${slug}` });
   });
 
   return entries;
@@ -1064,11 +1211,11 @@ function getAllCanvasEntries() {
 
 /** Update panel Download All: hitung file, tampilkan chip, aktifkan tombol */
 function updateDownloadAllPanel() {
-  const entries  = getAllCanvasEntries();
-  const countEl  = document.getElementById('dl-all-count');
-  const listEl   = document.getElementById('dl-all-list');
-  const btnEl    = document.getElementById('btn-download-all');
-  const btnTxt   = document.getElementById('dl-all-btn-text');
+  const entries = getAllCanvasEntries();
+  const countEl = document.getElementById('dl-all-count');
+  const listEl = document.getElementById('dl-all-list');
+  const btnEl = document.getElementById('btn-download-all');
+  const btnTxt = document.getElementById('dl-all-btn-text');
 
   if (!countEl) return;
 
@@ -1100,10 +1247,10 @@ async function downloadAllImages() {
   const entries = getAllCanvasEntries();
   if (entries.length === 0) return;
 
-  const btn       = document.getElementById('btn-download-all');
-  const btnTxt    = document.getElementById('dl-all-btn-text');
-  const progWrap  = document.getElementById('dl-all-progress-wrap');
-  const progBar   = document.getElementById('dl-progress-bar');
+  const btn = document.getElementById('btn-download-all');
+  const btnTxt = document.getElementById('dl-all-btn-text');
+  const progWrap = document.getElementById('dl-all-progress-wrap');
+  const progBar = document.getElementById('dl-progress-bar');
   const chipsList = document.querySelectorAll('.dl-file-chip');
 
   // — State: Packing —
@@ -1111,14 +1258,14 @@ async function downloadAllImages() {
   btn.classList.add('packing');
   if (btnTxt) btnTxt.textContent = `⏳ Mengemas ${entries.length} gambar...`;
   if (progWrap) progWrap.classList.add('visible');
-  if (progBar)  progBar.style.width = '0%';
+  if (progBar) progBar.style.width = '0%';
 
   // Reset chip style
   chipsList.forEach(c => c.classList.remove('ready'));
 
   const zip = new JSZip();
   const folder = zip.folder('hasil-pengolahan-citra');
-  const ts = new Date().toISOString().slice(0,10);
+  const ts = new Date().toISOString().slice(0, 10);
 
   for (let i = 0; i < entries.length; i++) {
     const { id, name } = entries[i];
@@ -1127,7 +1274,7 @@ async function downloadAllImages() {
 
     // Ambil blob PNG
     const dataUrl = canvas.toDataURL('image/png');
-    const base64  = dataUrl.split(',')[1];
+    const base64 = dataUrl.split(',')[1];
     folder.file(`${name}.png`, base64, { base64: true });
 
     // Update progres
@@ -1144,9 +1291,9 @@ async function downloadAllImages() {
 
   // Generate ZIP blob & trigger download
   const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-  const url  = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.href     = url;
+  link.href = url;
   link.download = `pengolahan-citra_${ts}.zip`;
   link.click();
   URL.revokeObjectURL(url);
@@ -1163,6 +1310,6 @@ async function downloadAllImages() {
     btn.classList.remove('done');
     if (btnTxt) btnTxt.textContent = `Unduh Semua (${entries.length} gambar) sebagai ZIP`;
     if (progWrap) progWrap.classList.remove('visible');
-    if (progBar)  progBar.style.width = '0%';
+    if (progBar) progBar.style.width = '0%';
   }, 3000);
 }
