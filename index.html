@@ -15,6 +15,7 @@
     rel="stylesheet" />
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -195,6 +196,13 @@
             <div class="canvas-single">
               <div class="canvas-label"><span class="dot"></span>Citra Grayscale</div>
               <canvas id="canvas-gray"></canvas>
+              <div class="download-bar">
+                <span class="dl-label">Unduh hasil konversi</span>
+                <button class="download-btn" onclick="downloadCanvas('canvas-gray', 'grayscale')" id="btn-dl-gray">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <span>Unduh PNG</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -224,6 +232,13 @@
               <div class="canvas-label"><span class="dot"></span>Citra Biner — Threshold: <span
                   id="lbl-threshold">127</span></div>
               <canvas id="canvas-binary"></canvas>
+              <div class="download-bar">
+                <span class="dl-label">Unduh hasil konversi</span>
+                <button class="download-btn" onclick="downloadCanvas('canvas-binary', 'binary-threshold')" id="btn-dl-binary">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <span>Unduh PNG</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -252,6 +267,13 @@
             <div class="canvas-single">
               <div class="canvas-label"><span class="dot"></span>Citra Brightness Adjusted</div>
               <canvas id="canvas-arith"></canvas>
+              <div class="download-bar">
+                <span class="dl-label">Unduh hasil konversi</span>
+                <button class="download-btn" onclick="downloadCanvas('canvas-arith', 'brightness-adjusted')" id="btn-dl-arith">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <span>Unduh PNG</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -281,10 +303,22 @@
               <div class="canvas-item">
                 <div class="canvas-label"><span class="dot"></span>Bitwise AND (Interaktif)</div>
                 <canvas id="canvas-bitand"></canvas>
+                <div class="download-bar">
+                  <button class="download-btn" onclick="downloadCanvas('canvas-bitand', 'bitwise-and')" id="btn-dl-bitand">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span>Unduh PNG</span>
+                  </button>
+                </div>
               </div>
               <div class="canvas-item">
                 <div class="canvas-label"><span class="dot"></span>Citra Negatif (NOT)</div>
                 <canvas id="canvas-not"></canvas>
+                <div class="download-bar">
+                  <button class="download-btn" onclick="downloadCanvas('canvas-not', 'negative-not')" id="btn-dl-not">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span>Unduh PNG</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -331,6 +365,13 @@
                 <div class="canvas-label"><span class="dot" style="background: var(--success);"></span>Citra Hasil
                   Normalisasi Histogram (Equalized Image)</div>
                 <canvas id="canvas-normalize"></canvas>
+                <div class="download-bar">
+                  <span class="dl-label">Unduh hasil ekualisasi</span>
+                  <button class="download-btn" onclick="downloadCanvas('canvas-normalize', 'histogram-equalized')" id="btn-dl-normalize">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span>Unduh PNG</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -392,6 +433,12 @@
                   <div class="canvas-label"><span class="dot" style="background:var(--success);"></span>Normalized Image
                   </div>
                   <canvas id="canvas-norm-after"></canvas>
+                  <div class="download-bar">
+                    <button class="download-btn" onclick="downloadCanvas('canvas-norm-after', 'image-normalized')" id="btn-dl-norm">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      <span>Unduh PNG</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -512,6 +559,42 @@
     </div>
   </main>
 
+  <!-- ===== DOWNLOAD ALL SECTION ===== -->
+  <section class="section visible" id="sec-download-all">
+    <div class="container">
+      <div class="download-all-card" id="download-all-card">
+        <div class="download-all-glow"></div>
+
+        <div class="download-all-icon">📦</div>
+
+        <div class="download-all-text">
+          <h2>Unduh Semua Hasil Konversi</h2>
+          <p>Kemas semua gambar yang telah diproses menjadi satu file <strong>.zip</strong> — siap diunduh sekaligus</p>
+        </div>
+
+        <div class="download-all-info" id="dl-all-info">
+          <span class="dl-all-badge" id="dl-all-count">—</span>
+          <span class="dl-all-badge-label">gambar tersedia</span>
+        </div>
+
+        <div class="download-all-progress" id="dl-all-progress-wrap">
+          <div class="dl-progress-bar" id="dl-progress-bar"></div>
+        </div>
+
+        <div class="download-all-actions">
+          <button class="download-all-btn" id="btn-download-all" onclick="downloadAllImages()" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span id="dl-all-btn-text">Upload gambar terlebih dahulu</span>
+          </button>
+        </div>
+
+        <div class="download-all-list" id="dl-all-list">
+          <!-- Diisi secara dinamis oleh JS -->
+        </div>
+      </div>
+    </div>
+  </section>
+
   <footer>
     <div class="container">
       <p>Tugas Praktikum Pengolahan Citra Digital &nbsp;·&nbsp; Rekayasa Perangkat Lunak Semester 4</p>
@@ -521,6 +604,12 @@
       <p style="margin-top:6px;">Institut Teknologi Bacharuddin Jusuf Habibie (ITH)</p>
     </div>
   </footer>
+
+  <!-- Toast notification for downloads -->
+  <div id="dl-toast">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    <span id="dl-toast-msg">Gambar berhasil diunduh!</span>
+  </div>
 
   <script src="script.js"></script>
 
