@@ -1,3 +1,4 @@
+
 /* ================================================================
    GLOBAL STATE
 ================================================================ */
@@ -147,6 +148,9 @@ function showAllSections() {
   buildImageNormalization();
   buildConvolutions();
   buildMorphology();
+
+  // Aktifkan panel Download All setelah semua selesai
+  requestAnimationFrame(() => updateDownloadAllPanel());
 }
 
 /* ================================================================
@@ -703,6 +707,7 @@ function buildConvolutions() {
   KERNELS.forEach((kDef, idx) => {
     const result   = applyConvolution(imgData, kDef.kernel, imgW, imgH);
     const canvasId = `canvas-conv-${idx}`;
+    const dlName   = `konvolusi-${kDef.name.toLowerCase().replace(/\s+/g, '-')}`;
 
     const item = document.createElement('div');
     item.className = 'conv-item';
@@ -712,6 +717,12 @@ function buildConvolutions() {
         ${buildKernelHTML(kDef.kernel)}
       </div>
       <canvas id="${canvasId}"></canvas>
+      <div class="download-bar">
+        <button class="download-btn" onclick="downloadCanvas('${canvasId}', '${dlName}')" id="btn-dl-conv-${idx}">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Unduh PNG</span>
+        </button>
+      </div>
     `;
     grid.appendChild(item);
 
@@ -829,6 +840,8 @@ function buildMorphology() {
     const dilated    = applyMorphology(imgData, kDef.k, imgW, imgH, 'dilate');
     const erosionId  = `canvas-erode-${idx}`;
     const dilationId = `canvas-dilate-${idx}`;
+    const dlErodeName  = `morfologi-erosi-${kDef.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+    const dlDilateName = `morfologi-dilasi-${kDef.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 
     const sec = document.createElement('div');
     sec.className = 'morph-section';
@@ -842,10 +855,22 @@ function buildMorphology() {
         <div class="canvas-item">
           <div class="canvas-label"><span class="dot"></span>Erosi (Erosion)</div>
           <canvas id="${erosionId}"></canvas>
+          <div class="download-bar">
+            <button class="download-btn" onclick="downloadCanvas('${erosionId}', '${dlErodeName}')" id="btn-dl-erode-${idx}">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Unduh PNG</span>
+            </button>
+          </div>
         </div>
         <div class="canvas-item">
           <div class="canvas-label"><span class="dot"></span>Dilasi (Dilation)</div>
           <canvas id="${dilationId}"></canvas>
+          <div class="download-bar">
+            <button class="download-btn" onclick="downloadCanvas('${dilationId}', '${dlDilateName}')" id="btn-dl-dilate-${idx}">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Unduh PNG</span>
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -926,6 +951,35 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
    UTILITY FUNCTIONS
 ================================================================ */
 
+/**
+ * Unduh canvas sebagai file PNG.
+ * @param {string} canvasId - ID elemen canvas
+ * @param {string} baseName - Nama file tanpa ekstensi
+ */
+function downloadCanvas(canvasId, baseName) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  const link = document.createElement('a');
+  link.download = `${baseName}_${Date.now()}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+
+  showToast(`✅ "${baseName}.png" berhasil diunduh!`);
+}
+
+/** Tampilkan toast notifikasi selama 2.5 detik */
+let _toastTimer = null;
+function showToast(msg) {
+  const toast = document.getElementById('dl-toast');
+  const msgEl = document.getElementById('dl-toast-msg');
+  if (!toast) return;
+  if (msgEl) msgEl.textContent = msg;
+  toast.classList.add('show');
+  if (_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
 function clamp(v) {
   return Math.max(0, Math.min(255, v));
 }
@@ -951,4 +1005,164 @@ function rgbToHSV(r, g, b) {
   }
 
   return { h, s, v };
+}
+
+/* ================================================================
+   DOWNLOAD ALL — Kumpulkan & ZIP semua canvas hasil konversi
+================================================================ */
+
+/**
+ * Daftar semua canvas yang akan disertakan dalam ZIP.
+ * Canvas dinamis (konvolusi/morfologi) di-resolve secara runtime
+ * berdasarkan elemen yang ada di DOM saat tombol diklik.
+ */
+function getAllCanvasEntries() {
+  // Canvas statis yang selalu ada setelah upload
+  const STATIC = [
+    { id: 'canvas-original',   name: '01-original' },
+    { id: 'canvas-gray',       name: '02-grayscale' },
+    { id: 'canvas-binary',     name: '03-binary-threshold' },
+    { id: 'canvas-arith',      name: '04-brightness-adjusted' },
+    { id: 'canvas-bitand',     name: '05-bitwise-and' },
+    { id: 'canvas-not',        name: '06-negative-not' },
+    { id: 'canvas-normalize',  name: '07-histogram-equalized' },
+    { id: 'canvas-norm-before',name: '08-normalization-before' },
+    { id: 'canvas-norm-after', name: '09-normalization-after' },
+  ];
+
+  const entries = [];
+
+  // Tambahkan canvas statis (hanya yang tersedia)
+  STATIC.forEach(e => {
+    const el = document.getElementById(e.id);
+    if (el && el.width > 0) entries.push(e);
+  });
+
+  // Konvolusi dinamis (canvas-conv-0 dst.)
+  KERNELS.forEach((k, idx) => {
+    const id = `canvas-conv-${idx}`;
+    const el = document.getElementById(id);
+    if (el && el.width > 0) {
+      const slug = k.name.toLowerCase().replace(/\s+/g, '-');
+      entries.push({ id, name: `10-konvolusi-${idx+1}-${slug}` });
+    }
+  });
+
+  // Morfologi dinamis (canvas-erode-x, canvas-dilate-x)
+  MORPH_KERNELS.forEach((k, idx) => {
+    const erodeId  = `canvas-erode-${idx}`;
+    const dilateId = `canvas-dilate-${idx}`;
+    const slug = k.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const eEl = document.getElementById(erodeId);
+    const dEl = document.getElementById(dilateId);
+    if (eEl && eEl.width > 0)  entries.push({ id: erodeId,  name: `11-erosi-${idx+1}-${slug}` });
+    if (dEl && dEl.width > 0)  entries.push({ id: dilateId, name: `11-dilasi-${idx+1}-${slug}` });
+  });
+
+  return entries;
+}
+
+/** Update panel Download All: hitung file, tampilkan chip, aktifkan tombol */
+function updateDownloadAllPanel() {
+  const entries  = getAllCanvasEntries();
+  const countEl  = document.getElementById('dl-all-count');
+  const listEl   = document.getElementById('dl-all-list');
+  const btnEl    = document.getElementById('btn-download-all');
+  const btnTxt   = document.getElementById('dl-all-btn-text');
+
+  if (!countEl) return;
+
+  countEl.textContent = entries.length;
+
+  // Render chip untuk setiap file
+  if (listEl) {
+    listEl.innerHTML = entries.map(e =>
+      `<span class="dl-file-chip ready">✓ ${e.name}.png</span>`
+    ).join('');
+  }
+
+  // Aktifkan tombol jika ada gambar
+  if (btnEl) {
+    btnEl.disabled = entries.length === 0;
+    if (btnTxt) btnTxt.textContent = entries.length > 0
+      ? `Unduh Semua (${entries.length} gambar) sebagai ZIP`
+      : 'Upload gambar terlebih dahulu';
+  }
+}
+
+/** Kemas semua canvas ke dalam satu file ZIP lalu unduh */
+async function downloadAllImages() {
+  if (typeof JSZip === 'undefined') {
+    showToast('⚠️ JSZip belum siap, coba lagi sebentar.');
+    return;
+  }
+
+  const entries = getAllCanvasEntries();
+  if (entries.length === 0) return;
+
+  const btn       = document.getElementById('btn-download-all');
+  const btnTxt    = document.getElementById('dl-all-btn-text');
+  const progWrap  = document.getElementById('dl-all-progress-wrap');
+  const progBar   = document.getElementById('dl-progress-bar');
+  const chipsList = document.querySelectorAll('.dl-file-chip');
+
+  // — State: Packing —
+  btn.disabled = true;
+  btn.classList.add('packing');
+  if (btnTxt) btnTxt.textContent = `⏳ Mengemas ${entries.length} gambar...`;
+  if (progWrap) progWrap.classList.add('visible');
+  if (progBar)  progBar.style.width = '0%';
+
+  // Reset chip style
+  chipsList.forEach(c => c.classList.remove('ready'));
+
+  const zip = new JSZip();
+  const folder = zip.folder('hasil-pengolahan-citra');
+  const ts = new Date().toISOString().slice(0,10);
+
+  for (let i = 0; i < entries.length; i++) {
+    const { id, name } = entries[i];
+    const canvas = document.getElementById(id);
+    if (!canvas) continue;
+
+    // Ambil blob PNG
+    const dataUrl = canvas.toDataURL('image/png');
+    const base64  = dataUrl.split(',')[1];
+    folder.file(`${name}.png`, base64, { base64: true });
+
+    // Update progres
+    const pct = Math.round(((i + 1) / entries.length) * 100);
+    if (progBar) progBar.style.width = pct + '%';
+
+    // Light chip satu per satu
+    const chip = document.querySelectorAll('.dl-file-chip')[i];
+    if (chip) chip.classList.add('ready');
+
+    // Beri jeda ringan agar UI tidak freeze
+    await new Promise(r => setTimeout(r, 12));
+  }
+
+  // Generate ZIP blob & trigger download
+  const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+  const url  = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href     = url;
+  link.download = `pengolahan-citra_${ts}.zip`;
+  link.click();
+  URL.revokeObjectURL(url);
+
+  // — State: Done —
+  btn.classList.remove('packing');
+  btn.classList.add('done');
+  if (btnTxt) btnTxt.textContent = `✅ ZIP berhasil diunduh!`;
+  showToast(`📦 ${entries.length} gambar dikemas dalam ZIP!`);
+
+  // Reset ke state normal setelah 3 detik
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.classList.remove('done');
+    if (btnTxt) btnTxt.textContent = `Unduh Semua (${entries.length} gambar) sebagai ZIP`;
+    if (progWrap) progWrap.classList.remove('visible');
+    if (progBar)  progBar.style.width = '0%';
+  }, 3000);
 }
