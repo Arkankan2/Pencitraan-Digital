@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Digital Image Processing - Interactive Laboratory</title>
   <meta name="description"
-    content="Tugas Praktikum Pengolahan Citra Digital oleh Naufal Madani, NIM 241011128, Rekayasa Perangkat Lunak Semester 4, ITH." />
+    content="Tugas Praktikum Pengolahan Citra Digital oleh Naufal Madani, NIM 241011128, Ilmu Komputer Semester 4, ITH." />
   <link rel="icon" href="logo.ico" type="image/png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -31,7 +31,7 @@
       <div class="group-info">
         <div class="group-info-item">
           <span class="group-info-label">Program Studi</span>
-          <span class="group-info-value">Rekayasa Perangkat Lunak — Semester 4</span>
+          <span class="group-info-value">Ilmu Komputer — Semester 4</span>
         </div>
         <div class="group-info-divider"></div>
         <div class="group-info-item">
@@ -41,7 +41,7 @@
         <div class="group-info-divider"></div>
         <div class="group-info-item">
           <span class="group-info-label">Mata Kuliah</span>
-          <span class="group-info-value">Pencitraan Digital</span>
+          <span class="group-info-value">Pengolahan Citra Digital</span>
         </div>
       </div>
 
@@ -319,7 +319,7 @@
             <div class="section-icon icon-amber">☀️</div>
             <div class="section-title-group">
               <h2>Operasi Aritmatika</h2>
-              <p>Brightness (tambah/kurang) &amp; Operasi Konstanta: Tambah, Kurang, Kali, Bagi — clamp 0–255</p>
+
             </div>
             <span class="poin-badge">Metode 4</span>
           </div>
@@ -363,137 +363,41 @@
               </div>
             </div>
 
-            <!-- ── SEPARATOR ──────────────────────────────────────────── -->
-            <div class="arith-divider">
-              <span>Operasi dengan Konstanta (k)</span>
-            </div>
-
-            <!-- ── SLIDER KONSTANTA (shared) ─────────────────────────── -->
-            <div class="control-row" style="margin-bottom:24px;">
-              <span class="control-label">🔢 Konstanta (k)</span>
-              <div class="slider-wrapper">
-                <input type="range" id="slider-const" min="1" max="100" value="30" />
-                <span class="slider-value" id="val-const">30</span>
+            <div class="arith-method-block" style="margin-top: 24px;">
+              <div class="arith-method-title">
+                <span class="arith-badge"
+                  style="background:#8b5cf6; color:white; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:700;">Contrast</span>
+                <span>Ubah kontras citra (meregangkan rentang warna dari abu-abu tengah)</span>
+              </div>
+              <div class="control-row">
+                <span class="control-label">🌓 Faktor Kontras</span>
+                <div class="slider-wrapper">
+                  <input type="range" id="slider-contrast" min="-100" max="100" value="0" />
+                  <span class="slider-value" id="val-contrast">0</span>
+                </div>
+              </div>
+              <div class="arith-formula-tag">
+                P_out = clamp(Faktor × (P_in - 128) + 128, 0, 255)
+              </div>
+              <div class="canvas-single">
+                <div class="canvas-label"><span class="dot"></span>Citra Contrast Adjusted — C = <span
+                    id="lbl-contrast">0</span></div>
+                <canvas id="canvas-contrast"></canvas>
+                <div class="download-bar">
+                  <span class="dl-label">Unduh hasil konversi</span>
+                  <button class="download-btn" onclick="downloadCanvas('canvas-contrast', 'contrast-adjusted')"
+                    id="btn-dl-contrast">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    <span>Unduh PNG</span>
+                  </button>
+                </div>
               </div>
             </div>
-
-            <!-- ── GRID 4 OPERASI ─────────────────────────────────────── -->
-            <div class="arith-ops-grid">
-
-              <!-- PENJUMLAHAN -->
-              <div class="arith-op-card">
-                <div class="arith-op-header">
-                  <span class="arith-op-icon">➕</span>
-                  <div>
-                    <div class="arith-op-title">Penjumlahan</div>
-                    <div class="arith-op-formula">out = clamp(P + k, 0, 255)</div>
-                  </div>
-                </div>
-                <div class="canvas-item">
-                  <div class="canvas-label"><span class="dot" style="background:#f59e0b;"></span>Hasil Penjumlahan (+
-                    <span class="lbl-k">30</span>)</div>
-                  <canvas id="canvas-add"></canvas>
-                  <div class="download-bar">
-                    <button class="download-btn" onclick="downloadCanvas('canvas-add','arith-penjumlahan')"
-                      id="btn-dl-add">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                      </svg>
-                      <span>Unduh PNG</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- PENGURANGAN -->
-              <div class="arith-op-card">
-                <div class="arith-op-header">
-                  <span class="arith-op-icon">➖</span>
-                  <div>
-                    <div class="arith-op-title">Pengurangan</div>
-                    <div class="arith-op-formula">out = clamp(P − k, 0, 255)</div>
-                  </div>
-                </div>
-                <div class="canvas-item">
-                  <div class="canvas-label"><span class="dot" style="background:#ef4444;"></span>Hasil Pengurangan (−
-                    <span class="lbl-k">30</span>)</div>
-                  <canvas id="canvas-sub"></canvas>
-                  <div class="download-bar">
-                    <button class="download-btn" onclick="downloadCanvas('canvas-sub','arith-pengurangan')"
-                      id="btn-dl-sub">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                      </svg>
-                      <span>Unduh PNG</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- PERKALIAN -->
-              <div class="arith-op-card">
-                <div class="arith-op-header">
-                  <span class="arith-op-icon">✖️</span>
-                  <div>
-                    <div class="arith-op-title">Perkalian</div>
-                    <div class="arith-op-formula">out = clamp(P × (k/10), 0, 255)</div>
-                  </div>
-                </div>
-                <div class="canvas-item">
-                  <div class="canvas-label"><span class="dot" style="background:#10b981;"></span>Hasil Perkalian (×
-                    <span class="lbl-kmul">3.0</span>)</div>
-                  <canvas id="canvas-mul"></canvas>
-                  <div class="download-bar">
-                    <button class="download-btn" onclick="downloadCanvas('canvas-mul','arith-perkalian')"
-                      id="btn-dl-mul">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                      </svg>
-                      <span>Unduh PNG</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- PEMBAGIAN -->
-              <div class="arith-op-card">
-                <div class="arith-op-header">
-                  <span class="arith-op-icon">➗</span>
-                  <div>
-                    <div class="arith-op-title">Pembagian</div>
-                    <div class="arith-op-formula">out = clamp(P ÷ (k/10), 0, 255)</div>
-                  </div>
-                </div>
-                <div class="canvas-item">
-                  <div class="canvas-label"><span class="dot" style="background:#6366f1;"></span>Hasil Pembagian (÷
-                    <span class="lbl-kdiv">3.0</span>)</div>
-                  <canvas id="canvas-div"></canvas>
-                  <div class="download-bar">
-                    <button class="download-btn" onclick="downloadCanvas('canvas-div','arith-pembagian')"
-                      id="btn-dl-div">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                      </svg>
-                      <span>Unduh PNG</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-            </div><!-- /arith-ops-grid -->
-
           </div>
         </div>
       </section>
@@ -561,7 +465,6 @@
           <div class="section-header">
             <div class="section-icon icon-rose">📊</div>
             <div class="section-title-group">
-              <h2>Histogram Intensitas &amp; Ekualisasi</h2>
               <p>Distribusi nilai piksel pada ruang warna RGB, Grayscale, HSV, serta Hasil Normalisasinya</p>
             </div>
             <span class="poin-badge">Metode 6 (Tambahan) </span>
@@ -574,7 +477,6 @@
               <button class="tab-btn active" data-tab="hist-rgb">🎨 RGB</button>
               <button class="tab-btn" data-tab="hist-gray">🔲 Grayscale</button>
               <button class="tab-btn" data-tab="hist-hsv">🌈 HSV Value</button>
-              <button class="tab-btn" data-tab="tab-normalize">📊 Ekualisasi</button>
             </div>
 
             <div class="tab-panel active" id="hist-rgb">
@@ -588,28 +490,6 @@
             </div>
             <div class="tab-panel" id="tab-normalize">
               <div class="chart-container"><canvas id="chart-normalize"></canvas></div>
-            </div>
-
-            <div class="equalization-result-wrap"
-              style="margin-top: 30px; border-top: 1px solid var(--border); padding-top: 25px;">
-              <div class="canvas-single">
-                <div class="canvas-label"><span class="dot" style="background: var(--success);"></span>Citra Hasil
-                  Normalisasi Histogram (Equalized Image)</div>
-                <canvas id="canvas-normalize"></canvas>
-                <div class="download-bar">
-                  <span class="dl-label">Unduh hasil ekualisasi</span>
-                  <button class="download-btn" onclick="downloadCanvas('canvas-normalize', 'histogram-equalized')"
-                    id="btn-dl-normalize">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                    <span>Unduh PNG</span>
-                  </button>
-                </div>
-              </div>
             </div>
 
           </div>
@@ -845,7 +725,7 @@
 
   <footer>
     <div class="container">
-      <p>Tugas Praktikum Pengolahan Citra Digital &nbsp;·&nbsp; Rekayasa Perangkat Lunak Semester 4</p>
+      <p>Tugas Praktikum Pengolahan Citra Digital &nbsp;·&nbsp; Ilmu Komputer Semester 4</p>
       <p style="margin-top:6px;">
         <span>MADE BY KELOMPOK ALPHA</span> &nbsp;·&nbsp;
       </p>
