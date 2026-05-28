@@ -1,10 +1,8 @@
-
 /* ================================================================
    GLOBAL STATE
 ================================================================ */
 let imgData = null;   // original proportional ImageData
 let grayData = null;   // grayscale ImageData
-let normData = null;   // TAMBAHAN: normalized (equalized) ImageData
 let imgW = 0;
 let imgH = 0;
 
@@ -143,7 +141,7 @@ function showAllSections() {
   renderBinary();
   renderBinaryOtsu();   // ← OTSU
   renderBrightness();
-  renderArithOps();     // ← 4 operasi konstanta
+  renderContrast();
   renderBitand();
   renderNot();
   buildHistograms();
@@ -554,7 +552,7 @@ function renderBinaryOtsu() {
 }
 
 /* ================================================================
-   POIN 3.3 — OPERASI ARITMATIKA (BRIGHTNESS + KONSTANTA)
+   POIN 3.3 — OPERASI ARITMATIKA 
 ================================================================ */
 const sliderBrightness = document.getElementById('slider-brightness');
 if (sliderBrightness) sliderBrightness.addEventListener('input', renderBrightness);
@@ -583,58 +581,38 @@ function renderBrightness() {
   renderImageDataToCanvas('canvas-arith', out, imgW, imgH);
 }
 
-/* ── Slider Konstanta (k) — shared untuk 4 operasi ── */
-const sliderConst = document.getElementById('slider-const');
-if (sliderConst) sliderConst.addEventListener('input', () => {
-  syncSliderGradient(sliderConst);
-  renderArithOps();
-});
 
-/**
- * Render semua 4 operasi konstanta sekaligus.
- * Perkalian & pembagian memakai faktor k/10 agar skala lebih halus
- * (k=10 → ×1.0, k=30 → ×3.0, k=50 → ×5.0, dst.)
- */
-function renderArithOps() {
+const sliderContrast = document.getElementById('slider-contrast');
+if (sliderContrast) sliderContrast.addEventListener('input', renderContrast);
+
+function renderContrast() {
   if (!imgData) return;
 
-  const k = +sliderConst.value;
-  document.getElementById('val-const').textContent = k;
-
-  // update semua label di kanvas
-  document.querySelectorAll('.lbl-k').forEach(el => el.textContent = k);
-
-  const factor = (k / 10).toFixed(1);
-  document.querySelectorAll('.lbl-kmul').forEach(el => el.textContent = factor);
-  document.querySelectorAll('.lbl-kdiv').forEach(el => el.textContent = factor);
+  const c = +sliderContrast.value;
+  const sign = c > 0 ? '+' : '';
+  document.getElementById('val-contrast').textContent = sign + c;
+  const lblC = document.getElementById('lbl-contrast');
+  if (lblC) lblC.textContent = sign + c;
+  syncSliderGradient(sliderContrast);
 
   const src = imgData.data;
-  const fk = k / 10;   // faktor floating-point untuk kali & bagi
+  const out = new ImageData(imgW, imgH);
+  const d = out.data;
 
-  // Buffer re-usable
-  const addOut = new ImageData(imgW, imgH);
-  const subOut = new ImageData(imgW, imgH);
-  const mulOut = new ImageData(imgW, imgH);
-  const divOut = new ImageData(imgW, imgH);
-  const a = addOut.data, s = subOut.data, m = mulOut.data, dv = divOut.data;
+  // Formula Kontras: Mengonversi skala -100 s/d 100 menjadi faktor pengali
+  // Menggunakan algoritma rasio kontras standar (259)
+  const C = c * 2.55;
+  const F = (259 * (C + 255)) / (255 * (259 - C));
 
   for (let i = 0; i < src.length; i += 4) {
-    for (let c = 0; c < 3; c++) {
-      const p = src[i + c];
-      a[i + c] = clamp(p + k);
-      s[i + c] = clamp(p - k);
-      m[i + c] = clamp(Math.round(p * fk));
-      dv[i + c] = clamp(Math.round(p / fk));
-    }
-    a[i + 3] = s[i + 3] = m[i + 3] = dv[i + 3] = 255;
+    d[i] = clamp(F * (src[i] - 128) + 128);
+    d[i + 1] = clamp(F * (src[i + 1] - 128) + 128);
+    d[i + 2] = clamp(F * (src[i + 2] - 128) + 128);
+    d[i + 3] = 255;
   }
 
-  renderImageDataToCanvas('canvas-add', addOut, imgW, imgH);
-  renderImageDataToCanvas('canvas-sub', subOut, imgW, imgH);
-  renderImageDataToCanvas('canvas-mul', mulOut, imgW, imgH);
-  renderImageDataToCanvas('canvas-div', divOut, imgW, imgH);
+  renderImageDataToCanvas('canvas-contrast', out, imgW, imgH);
 }
-
 
 /* ================================================================
    POIN 3.4 — OPERASI LOGIKA
@@ -776,17 +754,6 @@ function buildHistograms() {
     }
   ]));
 
-  // TAMBAHAN: Instansiasi objek grafik histogram baru untuk normalisasi
-  chartNorm = new Chart(document.getElementById('chart-normalize'), chartCfg([
-    {
-      label: 'Equalized Histogram',
-      data: nHist,
-      borderColor: '#10b981', // Hijau aksen sukses
-      borderWidth: 2,
-      fill: true,
-      backgroundColor: 'rgba(16,185,129,0.08)'
-    }
-  ]));
 }
 
 /* ================================================================
@@ -1166,13 +1133,9 @@ function getAllCanvasEntries() {
     { id: 'canvas-binary', name: '03-binary-manual' },
     { id: 'canvas-binary-otsu', name: '03-binary-otsu' },
     { id: 'canvas-arith', name: '04-brightness-adjusted' },
-    { id: 'canvas-add', name: '04-aritmatika-penjumlahan' },
-    { id: 'canvas-sub', name: '04-aritmatika-pengurangan' },
-    { id: 'canvas-mul', name: '04-aritmatika-perkalian' },
-    { id: 'canvas-div', name: '04-aritmatika-pembagian' },
+    { id: 'canvas-contrast', name: '04-contrast-adjusted' },
     { id: 'canvas-bitand', name: '05-bitwise-and' },
     { id: 'canvas-not', name: '06-negative-not' },
-    { id: 'canvas-normalize', name: '07-histogram-equalized' },
     { id: 'canvas-norm-before', name: '08-normalization-before' },
     { id: 'canvas-norm-after', name: '09-normalization-after' },
   ];
